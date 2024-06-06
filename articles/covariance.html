@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Single-pass, exponentially decayed covariance in Python</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="../style.css">
+
+        <style>
+            #home-button {
+                display: block;
+                position: absolute;
+                top: 0.5rem;
+                left: 1.5rem;
+                font-size: 1.5rem;
+            }
+            .article-title {
+                text-align: center;
+            }
+            .article-body {
+                box-shadow: inset 0 1px 0 0 rgba(0, 0, 0, 0.075);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="wrapper">
+
+            <!-- Title-->
+            <section class="article-title">
+                <h1>Single-pass, exponentially decayed covariance in Python</h1>
+                <p class="major">
+                    Given vectors of timestamped observations of two jointly distributed random variables, this article
+                    derives & discusses the Python implementation of a single-pass algorithm to compute an exponentially
+                    decayed covariance of these observations.
+                </p>
+                <a id="home-button" href="../index.html">&lt;&nbsp;&nbsp;Home</a>
+            </section>
+
+            <!-- Content -->
+            <section class="article-body">
+                <h3>Context</h3>
+                <p>
+                    Suppose there are two jointly distributed (i.e, not independent) random variables $X$ and $Y$, for which
+                    we have corresponding vectors of observations $\boldsymbol{x}$ and $\boldsymbol{y}$, recorded at epoch
+                    timestamps $\boldsymbol{t}$ seconds. We wish to measure a weighted sample covariance between these
+                    observations, with weights derived from observation times, where the most recent observations have the
+                    largest weights. For performance reasons, our algorithm should only utilise a "single pass", meaning we
+                    iterate through the vectors $\boldsymbol{x}$, $\boldsymbol{y}$ and $\boldsymbol{t}$ only once.
+                </p>
+
+                <h3>Definitions</h3>
+                <p>
+                    The unweighted sample covariance (in $(-\infty,+\infty )$) of these observations is defined as:
+                    $$\text{Cov}(\boldsymbol{x}, \boldsymbol{y}) \> = \> \frac{\sum_{i=1}^N (x_i - x^*)(y_i - y^*)}{N-1}$$
+                    where $N$ is the number of observations, $x^*$ is the mean of $\boldsymbol{x}$ and $y^*$ is the mean of
+                    $\boldsymbol{y}$. This quantifies the relationship between the variances of $\boldsymbol{x}$ and $\boldsymbol{y}$:
+                </p>
+                <ul>
+                    <li>a positive covariance indicates that $X$ and $Y$ tend to move together,</li>
+                    <li>a negative covariance indicates that they move in opposite directions, and</li>
+                    <li>zero covariance suggests that $X$ and $Y$ are actually independent.</li>
+                </ul>
+                <p>
+                    To implement "exponential decay" using the non-decreasing observation times $\boldsymbol{t}$, given a
+                    half life of $T$ seconds, we define observation weights:
+                    $$w_i \> = \> 2^{-\frac{t_N - t_i}{T}}$$
+                    for $i \in [1, N]$, such that $w_N = 1$, $w_i = 0.5$ when $t_N - t_i = T$ (hence the name "half life")
+                    and $w_i \to 0$ as $t_i$ decreases. These weights are then used to compute weighted means of $\boldsymbol{x}$
+                    and $\boldsymbol{y}$:
+                    $$x^* = \frac{\sum_{i=1}^N w_i x_i}{\sum_{i=1}^N w_i}, \>\>\> y^* = \frac{\sum_{i=1}^N w_i y_i}{\sum_{i=1}^N w_i}.$$
+                    Using these, we can define the biased, weighted covariance of $\boldsymbol{x}$ and $\boldsymbol{y}$ as:
+                    $$\text{Cov}_B(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*)}{\sum_{i=1}^N w_i},$$
+                    and the unbiased, weighted covariance as:
+                    $$\text{Cov}_U(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i}{\left( \sum_{i=1}^N w_i \right) - \sum_{i=1}^N w_i^2} \sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*).$$
+                    To help convince yourself of this definition, try substituting uniform weights of $w_i = \frac{1}{N}$.
+                    The above expression will reduce to the unweighted sample covariance we defined at the beginning of this section.
+                </p>
+                
+            </section>
+
+            <!-- Footer -->
+            <footer>
+                <div class="inner">
+                    <p style="margin-bottom: 5px;">Copyright &copy; Ethan Mitchell 2024</p>
+                    <p style="margin-bottom: 5px;">ethanmitchell98@gmail.com</p>
+                </div>
+            </footer>
+
+        </div>
+    </body>
+
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+</html>
