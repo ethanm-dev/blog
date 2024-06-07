@@ -8,22 +8,19 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
 
         <link rel="stylesheet" href="../style.css">
 
         <style>
-            #home-button {
-                display: block;
-                position: absolute;
-                top: 0.5rem;
-                left: 1.5rem;
-                font-size: 1.5rem;
-            }
-            .article-title {
-                text-align: center;
-            }
-            .article-body {
-                box-shadow: inset 0 1px 0 0 rgba(0, 0, 0, 0.075);
+            code {
+                font-family: "Source Code Pro", monospace;
+                font-optical-sizing: auto;
+                font-weight: 400;
+                font-style: normal;
+                font-size: 1rem;
             }
         </style>
     </head>
@@ -77,10 +74,86 @@
                     $$\text{Cov}_B(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*)}{\sum_{i=1}^N w_i},$$
                     and the unbiased, weighted covariance as:
                     $$\text{Cov}_U(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i}{\left( \sum_{i=1}^N w_i \right) - \sum_{i=1}^N w_i^2} \sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*).$$
-                    To help convince yourself of this definition, try substituting uniform weights of $w_i = \frac{1}{N}$.
-                    The above expression will reduce to the unweighted sample covariance we defined at the beginning of this section.
+                    To help convince yourself of this definition, try substituting uniform weights of $w_i = 1$. The above
+                    expression will reduce to the unweighted sample covariance we defined at the beginning of this section.
                 </p>
-                
+
+                <h3>Derivation</h3>
+                <p>
+                    In order to implement a single-pass algorithm, we need to derive recursive formulas for the weighted
+                    means and covariance. Let $W_n \> = \> \sum_{i=1}^n w_i$ be the sum of the first $n$ weights in
+                    $\boldsymbol{w}$. Then the weighted mean of the first $n$ observations of $X$ is
+                    $$\begin{aligned}
+                        \mu_n \> &= \> \frac{1}{W_n} \sum_{i=1}^n w_i x_i \\
+                        &= \> \frac{1}{W_n} \left( \sum_{i=1}^{n-1} w_i x_i + w_n x_n \right) \\
+                        &= \> \frac{1}{W_n} \left( \frac{W_{n-1}}{W_{n-1}} \sum_{i=1}^{n-1} w_i x_i + w_n x_n \right) \\
+                        &= \> \frac{W_{n-1}}{W_n} \left( \frac{1}{W_{n-1}} \sum_{i=1}^{n-1} w_i x_i \right) + \frac{w_n}{W_n} x_n \\
+                        &= \> \frac{W_{n-1}}{W_n} \mu_{n-1} + \frac{w_n}{W_n} x_n \\
+                        &= \> \left( 1 - \frac{w_n}{W_n} \right) \mu_{n-1} + \frac{w_n}{W_n} x_n,
+                    \end{aligned}$$
+                    thus we have a formula for the $n^{\text{th}}$ weighted mean as a linear combination of the
+                    $(n-1)^{\text{th}}$ weighted mean and the $n^{\text{th}}$ observation.
+                </p>
+                <p>
+                    Next, we look at deriving Welford's method for computing weighted variance (a specific case of weighted
+                    covariance) in a single pass. We define the "sum of weighted squared deviations" of the first $n$
+                    observations of $X$ as
+                    $$\beta_n \> = \> \sum_{i=1}^n w_i (x_i - \mu_n)^2$$
+                    such that the biased, weighted variance $\sigma_n^2 = \frac{\beta_n}{W_n}$. Consider the difference
+                    between consecutive sums:
+                    $$\begin{aligned}
+                        \beta_n - \beta_{n-1} \> &= \> \sum_{i=1}^n w_i (x_i - \mu_n)^2 - \sum_{i=1}^{n-1} w_i (x_i - \mu_{n-1})^2 \\
+                        &= \> w_n(x_n - \mu_n)^2 + \sum_{i=1}^{n-1} w_i \left( (x_i - \mu_n)^2 - (x_i - \mu_{n-1})^2 \right) \\
+                        &= \> w_n(x_n - \mu_n)^2 + \sum_{i=1}^{n-1} w_i \left( (x_i - \mu_n - x_i + \mu_{n-1}) (x_i - \mu_n + x_i - \mu_{n-1}) \right) \>\> \text{by the difference of two squares } a^2 - b^2 = (a+b)(a-b) \\
+                        &= \> w_n(x_n - \mu_n)^2 + \sum_{i=1}^{n-1} w_i \left( (\mu_{n-1} - \mu_n) (x_i - \mu_n + x_i - \mu_{n-1}) \right) \\
+                        &= \> w_n(x_n - \mu_n)^2 + (\mu_{n-1} - \mu_n) \sum_{i=1}^{n-1} w_i \left( (x_i - \mu_n) + (x_i - \mu_{n-1}) \right).
+                    \end{aligned}$$
+                    To continue simplifying this expression, we use the fact that the weighted sum of deviations from
+                    the mean is zero:
+                    $$
+                        \sum_{i=1}^k w_i(x_i - \mu_k) \> = \> \sum_{i=1}^k w_i x_i - \mu_k \sum_{i=1}^k w_i \>
+                        = \> \sum_{i=1}^k w_i x_i - \left( \frac{\sum_{i=1}^k w_i x_i}{\sum_{i=1}^k w_i} \right) \sum_{i=1}^k w_i \>
+                        = \> \sum_{i=1}^k w_i x_i - \sum_{i=1}^k w_i x_i \> = \> 0.
+                    $$
+                    Thus, we have that
+                    $$\begin{aligned}
+                        \beta_n - \beta_{n-1} \> &= \> w_n(x_n - \mu_n)^2 + (\mu_{n-1} - \mu_n) \sum_{i=1}^{n-1} w_i (x_i - \mu_n) \\
+                        &= \> w_n(x_n - \mu_n)^2 + (\mu_{n-1} - \mu_n) \left( -w_n(x_n - \mu_n) \right) \\
+                        &= \> w_n(x_n - \mu_n)(x_n - \mu_n - \mu_{n-1} + \mu_n) \\
+                        &= \> w_n(x_n - \mu_n)(x_n - \mu_{n-1}).
+                    \end{aligned}$$
+                    Therefore
+                    $$\beta_n \> = \> \beta_{n-1} + w_n(x_n - \mu_n)(x_n - \mu_{n-1})$$
+                    and
+                    $$\begin{aligned}
+                        \sigma_n^2 \> &= \> \frac{\beta_n}{W_n} \\
+                        &= \> \frac{1}{W_n} \left( \beta_{n-1} + w_n(x_n - \mu_n)(x_n - \mu_{n-1}) \right) \\
+                        &= \> \frac{1}{W_n} \left( W_{n-1}\sigma_{n-1}^2 + w_n(x_n - \mu_n)(x_n - \mu_{n-1}) \right) \\
+                        &= \> \frac{W_{n-1}}{W_n}\sigma_{n-1}^2 + \frac{w_n}{W_n}(x_n - \mu_n)(x_n - \mu_{n-1}) \\
+                        &= \> \left( 1 - \frac{w_n}{W_n} \right)\sigma_{n-1}^2 + \frac{w_n}{W_n}(x_n - \mu_n)(x_n - \mu_{n-1}),
+                    \end{aligned}$$
+                    which is Welford's method: a formula for the $n^{\text{th}}$ weighted variance with respect
+                    to the $(n-1)^{\text{th}}$ weighted variance and the $n^{\text{th}}$ observation (as well
+                    as the $(n-1)^{\text{th}}$ and $n^{\text{th}}$ weighted means).
+                </p>
+                <p>
+                    We can generalise Welford's method for the variance $\sigma_n^2$ to the covariance $\rho_n^2$
+                    of the first $n$ observations of $X$ and $Y$, given weighted means $\mu_n$ and $\nu_n$
+                    respectively. TODO
+                </p>
+
+                <h3>Implementation</h3>
+                <p>
+                    TODO
+                </p>
+
+                <h3>Performance</h3>
+                <p>
+                    <pre><code class="language-python">
+                        def example(a: int, b: float) -> str:
+                            return f"The result is {a + b:.2f}"
+                    </code></pre>
+                </p>
             </section>
 
             <!-- Footer -->
@@ -102,5 +175,9 @@
         };
     </script>
     <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+    <script>hljs.highlightAll();</script>
 
 </html>
