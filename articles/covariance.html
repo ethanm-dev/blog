@@ -104,7 +104,7 @@
                     $$\begin{aligned}
                         \beta_n - \beta_{n-1} \> &= \> \sum_{i=1}^n w_i (x_i - \mu_n)^2 - \sum_{i=1}^{n-1} w_i (x_i - \mu_{n-1})^2 \\
                         &= \> w_n(x_n - \mu_n)^2 + \sum_{i=1}^{n-1} w_i \left( (x_i - \mu_n)^2 - (x_i - \mu_{n-1})^2 \right) \\
-                        &= \> w_n(x_n - \mu_n)^2 + \sum_{i=1}^{n-1} w_i \left( (x_i - \mu_n - x_i + \mu_{n-1}) (x_i - \mu_n + x_i - \mu_{n-1}) \right) \>\> \text{by the difference of two squares } a^2 - b^2 = (a+b)(a-b) \\
+                        &= \> w_n(x_n - \mu_n)^2 + \sum_{i=1}^{n-1} w_i \left( (x_i - \mu_n - x_i + \mu_{n-1}) (x_i - \mu_n + x_i - \mu_{n-1}) \right) \\
                         &= \> w_n(x_n - \mu_n)^2 + \sum_{i=1}^{n-1} w_i \left( (\mu_{n-1} - \mu_n) (x_i - \mu_n + x_i - \mu_{n-1}) \right) \\
                         &= \> w_n(x_n - \mu_n)^2 + (\mu_{n-1} - \mu_n) \sum_{i=1}^{n-1} w_i \left( (x_i - \mu_n) + (x_i - \mu_{n-1}) \right).
                     \end{aligned}$$
@@ -137,9 +137,32 @@
                     as the $(n-1)^{\text{th}}$ and $n^{\text{th}}$ weighted means).
                 </p>
                 <p>
-                    We can generalise Welford's method for the variance $\sigma_n^2$ to the covariance $\rho_n^2$
-                    of the first $n$ observations of $X$ and $Y$, given weighted means $\mu_n$ and $\nu_n$
-                    respectively. TODO
+                    We can generalise Welford's method for the variance $\sigma_n^2$ to the biased, weighted covariance
+                    $\rho_n^2$ of the first $n$ observations of $X$ and $Y$, given weighted means $\mu_n$ and $\nu_n$
+                    respectively. Skipping the proof of this generalisation, we have that $\rho_n^2 = \frac{\gamma_n}{W_n}$
+                    where
+                    $$\begin{aligned}
+                        \gamma_n \> &= \> \sum_{i=1}^n w_i (x_i - \mu_n)(y_i - \nu_n) \\
+                        &= \> \gamma_{n-1} + w_n(x_n - \mu_n)(y_n - \nu_{n-1}) \\
+                        &= \> \gamma_{n-1} + w_n(x_n - \mu_{n-1})(y_n - \nu_n).
+                    \end{aligned}$$
+                    There appears to be an asymmetry between the two possible recursive formulas above, however
+                    it can be shown that these two formulas are equivalent (i.e., we can choose to use the current
+                    mean for either the $X$ or $Y$ term, and the previous mean for the other). Then
+                    $$\begin{aligned}
+                        \rho_n^2 \> &= \> \frac{\gamma_n}{W_n} \\
+                        &= \> \frac{\gamma_{n-1}}{W_n} + \frac{w_n}{W_n} (x_n - \mu_{n-1})(y_n - \nu_n) \\
+                        &= \> \frac{W_{n-1}}{W_n} \rho_{n-1}^2 + \frac{w_n}{W_n} (x_n - \mu_{n-1})(y_n - \nu_n) \\
+                        &= \> \left( 1 - \frac{w_n}{W_n} \right) \rho_{n-1}^2 + \frac{w_n}{W_n} (x_n - \mu_{n-1})(y_n - \nu_n),
+                    \end{aligned}$$
+                    which is Welford's formula for the $n^{\text{th}}$ weighted covariance.
+                </p>
+                <p>
+                    Finally, to compute the unbiased, weighted covariance
+                    $$\phi_n^2 \> = \> \frac{W_n}{W_n^2 - \sum_{i=1}^n w_i^2} \sum_{i=1}^n w_i(x_i - \mu_n^2)(y_i - \nu_n^2),$$
+                    we can simply multiply the biased, weighted covariance by a correction factor:
+                    $$\phi_n^2 \> = \> \frac{W_n^2}{W_n^2 - \sum_{i=1}^n w_i^2} \rho_n^2,$$
+                    which can simply be applied to the final covariance result before our algorithm terminates.
                 </p>
 
                 <h3>Implementation</h3>
