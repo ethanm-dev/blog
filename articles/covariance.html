@@ -161,7 +161,7 @@
                     Before implementing our single-pass algorithm, we will write a simple, naive function to compute
                     the exponentially decayed covariance, such that we can compare the output of these two implementations
                     for correctness. The naive approach uses basic
-                    <a href="https://numpy.org/doc/stable/user/whatisnumpy.html">Numpy</a> array routines to calculate the
+                    <a href="https://numpy.org/doc/stable/user/whatisnumpy.html" target="_blank">Numpy</a> array routines to calculate the
                     covariance by the formula defined at the bottom of the "Definitions" section of this article.
                 </p>
                 <pre><code class="language-python">import numpy as np
@@ -194,11 +194,11 @@ def naive_exp_covariance(
                 <br>
                 <p>
                     To achieve the best performance, we will implement our single-pass algorithm using
-                    <a href="https://numba.pydata.org/">Numba</a>, a Python library that translates decorated
-                    functions into optimised machine code at runtime, allowing us to write our function in friendly
-                    Python syntax while still achieving C-like performance. Numba supports a subset of inbuilt
-                    Python & Numpy functionality, but is more than sufficient for our purposes here. We use the
-                    <code>@njit</code> decorator to indicate that our function should be compiled using Numba's
+                    <a href="https://numba.pydata.org/" target="_blank">Numba</a>, a Python library that translates
+                    decorated functions into optimised machine code at runtime, allowing us to write our function
+                    in friendly Python syntax while still achieving C-like performance. Numba supports a subset of
+                    inbuilt Python & Numpy functionality, but is more than sufficient for our purposes here. We use
+                    the <code>@njit</code> decorator to indicate that our function should be compiled using Numba's
                     JIT compiler, and we use Numba's provided types to specify the input and output types of our
                     function. To call this function from our Python code, we simply provide Numpy arrays (with a
                     matching <code>dtype</code>) as input and receive a float as output. Our single-pass algorithm
@@ -264,10 +264,11 @@ def exp_covariance(
                 <h3>Performance</h3>
                 <p>
                     To assess the accuracy of both our naive and single-pass algorithms, we can write a simple test case
-                    using <a href="https://docs.pytest.org/en/latest/">Pytest</a>, which is Python's most popular testing
-                    framework. For this test case, we include some NaN values to ensure that both algorithms handle
-                    missing data correctly. After manually calculating the weighted covariance on the test data, we can
-                    assert that the output of both algorithms is within a small tolerance of the expected result.
+                    using <a href="https://docs.pytest.org/en/latest/" target="_blank">Pytest</a>, which is Python's most
+                    popular testing framework. For this test case, we include some NaN values to ensure that both
+                    algorithms handle missing data correctly. After manually calculating the weighted covariance on the
+                    test data, we can assert that the output of both algorithms is within a small tolerance of the
+                    expected result.
                 </p>
                 <pre><code class="language-python">import numpy as np
 import pytest
@@ -340,11 +341,11 @@ half_life = SIZE / 10</code></pre>
                 <ol id="references">
                     <li>
                         The GSL Team. “Statistics — GSL 2.8 Documentation.” <i>GNU Scientific Library</i>, 2024,
-                        <a href="www.gnu.org/software/gsl/doc/html/statistics.html#weighted-samples">www.gnu.org/software/gsl/doc/html/statistics.html#weighted-samples</a>.
+                        <a href="https://www.gnu.org/software/gsl/doc/html/statistics.html#weighted-samples" target="_blank">www.gnu.org/software/gsl/doc/html/statistics.html#weighted-samples</a>.
                     </li>
                     <li>
                         Willmert, Justin. "Notes on Calculating Online Statistics." <i>Justinwillmert.com</i>, 12 Dec. 2022,
-                        <a href="justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/">justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/</a>.
+                        <a href="https://justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/" target="_blank">justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/</a>.
                     </li>
                 </ol>
             </section>
