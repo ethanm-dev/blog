@@ -14,16 +14,6 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
 
         <link rel="stylesheet" href="../style.css">
-
-        <style>
-            code {
-                font-family: "Source Code Pro", monospace;
-                font-optical-sizing: auto;
-                font-weight: 400;
-                font-style: normal;
-                font-size: 1rem;
-            }
-        </style>
     </head>
     <body>
         <div id="wrapper">
@@ -170,8 +160,9 @@
                 <p>
                     Before implementing our single-pass algorithm, we will write a simple, naive function to compute
                     the exponentially decayed covariance, such that we can compare the output of these two implementations
-                    for correctness. The naive approach uses basic Numpy array routines to calculate the covariance by the
-                    formula defined at the bottom of the "Definitions" section of this article.
+                    for correctness. The naive approach uses basic
+                    <a href="https://numpy.org/doc/stable/user/whatisnumpy.html">Numpy</a> array routines to calculate the
+                    covariance by the formula defined at the bottom of the "Definitions" section of this article.
                 </p>
                 <pre><code class="language-python">import numpy as np
 import numpy.typing as npt
@@ -202,15 +193,16 @@ def naive_exp_covariance(
     return (w_sum / (w_sum ** 2 - w_sum_2)) * np.sum(w * (x - x_mean) * (y - y_mean))</code></pre>
                 <br>
                 <p>
-                    To achieve the best performance, we will implement our single-pass algorithm using Numba, a
-                    Python library that translates decorated functions into optimised machine code at runtime,
-                    allowing us to write our function in friendly Python syntax while still achieving C-like
-                    performance. Numba supports a subset of inbuilt Python & Numpy functionality, but is more than
-                    sufficient for our purposes here. We use the <code>@njit</code> decorator to indicate that
-                    our function should be compiled using Numba's JIT compiler, and we use Numba's provided types to
-                    specify the input and output types of our function. To call this function from our Python code,
-                    we simply provide Numpy arrays (with a matching <code>dtype</code>) as input and receive a
-                    float as output. Our single-pass algorithm receives just four inputs:
+                    To achieve the best performance, we will implement our single-pass algorithm using
+                    <a href="https://numba.pydata.org/">Numba</a>, a Python library that translates decorated
+                    functions into optimised machine code at runtime, allowing us to write our function in friendly
+                    Python syntax while still achieving C-like performance. Numba supports a subset of inbuilt
+                    Python & Numpy functionality, but is more than sufficient for our purposes here. We use the
+                    <code>@njit</code> decorator to indicate that our function should be compiled using Numba's
+                    JIT compiler, and we use Numba's provided types to specify the input and output types of our
+                    function. To call this function from our Python code, we simply provide Numpy arrays (with a
+                    matching <code>dtype</code>) as input and receive a float as output. Our single-pass algorithm
+                    receives just four inputs:
                 </p>
                 <ul>
                     <li><code>x: types.float64[:]</code>: a Numpy array of floating point observations of $X$;</li>
@@ -272,10 +264,10 @@ def exp_covariance(
                 <h3>Performance</h3>
                 <p>
                     To assess the accuracy of both our naive and single-pass algorithms, we can write a simple test case
-                    using Pytest, which is Python's most popular testing framework. For this test case, we include some
-                    NaN values to ensure that both algorithms handle missing data correctly. After manually calculating
-                    the weighted covariance on the test data, we can assert that the output of both algorithms is within
-                    a small tolerance of the expected result.
+                    using <a href="https://docs.pytest.org/en/latest/">Pytest</a>, which is Python's most popular testing
+                    framework. For this test case, we include some NaN values to ensure that both algorithms handle
+                    missing data correctly. After manually calculating the weighted covariance on the test data, we can
+                    assert that the output of both algorithms is within a small tolerance of the expected result.
                 </p>
                 <pre><code class="language-python">import numpy as np
 import pytest
@@ -343,6 +335,18 @@ half_life = SIZE / 10</code></pre>
                     If you have any corrections or questions - please send me an email and we can have a discussion. Any
                     edits or additions to the original article & code will be noted here.
                 </p>
+
+                <h3>References</h3>
+                <ol id="references">
+                    <li>
+                        The GSL Team. “Statistics — GSL 2.8 Documentation.” <i>GNU Scientific Library</i>, 2024,
+                        <a href="www.gnu.org/software/gsl/doc/html/statistics.html#weighted-samples">www.gnu.org/software/gsl/doc/html/statistics.html#weighted-samples</a>.
+                    </li>
+                    <li>
+                        Willmert, Justin. "Notes on Calculating Online Statistics." <i>Justinwillmert.com</i>, 12 Dec. 2022,
+                        <a href="justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/">justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/</a>.
+                    </li>
+                </ol>
             </section>
 
             <!-- Footer -->
