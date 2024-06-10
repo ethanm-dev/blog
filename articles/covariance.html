@@ -73,7 +73,7 @@
                     Using these, we can define the biased, weighted covariance of $\boldsymbol{x}$ and $\boldsymbol{y}$ as:
                     $$\text{Cov}_B(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*)}{\sum_{i=1}^N w_i},$$
                     and the unbiased, weighted covariance as:
-                    $$\text{Cov}_U(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i}{\left( \sum_{i=1}^N w_i \right) - \sum_{i=1}^N w_i^2} \sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*).$$
+                    $$\text{Cov}_U(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i}{\left( \sum_{i=1}^N w_i \right)^2 - \sum_{i=1}^N w_i^2} \sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*).$$
                     To help convince yourself of this definition, try substituting uniform weights of $w_i = 1$. The above
                     expression will reduce to the unweighted sample covariance we defined at the beginning of this section.
                 </p>
@@ -266,13 +266,18 @@ def exp_covariance(
             covariance = (1 - w / w_sum) * covariance + (w / w_sum) * (x[i] - x_mean_old) * (y[i] - y_mean)
 
     return (w_sum ** 2 / (w_sum ** 2 - w_sum_2)) * covariance</code></pre>
-<br>
+                <br>
 
                 <h3>Performance</h3>
-                <p>TODO: intro Pytest and explain testing accuracy here</p>
+                <p>
+                    To assess the accuracy of both our naive and single-pass algorithms, we can write a simple test case
+                    using Pytest, which is Python's most popular testing framework. For this test case, we include some
+                    NaN values to ensure that both algorithms handle missing data correctly. After manually calculating
+                    the weighted covariance on the test data, we can assert that the output of both algorithms is within
+                    a small tolerance of the expected result.
+                </p>
                 <pre><code class="language-python">import numpy as np
 import pytest
-
 from covariance import exp_covariance, naive_exp_covariance
 
 
@@ -301,9 +306,42 @@ def test_exp_covariance(x, y, t, half_life, expected_cov):
     fast_cov = exp_covariance(x, y, t, half_life)
     assert abs(naive_cov - expected_cov) < 1e-3
     assert abs(fast_cov - expected_cov) < 1e-3</code></pre>
+                <br>
+                <p>
+                    If this test case is saved in a file named <code>test_covariance.py</code>, then the test can be run
+                    with the command <code>pytest test_covariance.py</code>, which will raise an error if the output of
+                    either algorithm deviates from the expected result by more than $10^{-3}$. If you try running this
+                    test yourself, you will find that it passes - hence both algorithms are accurate.
+                </p>
+                <p>
+                    To compare the runtime of the single-pass algorithm against the naive approach, we can generate a
+                    large set of fake observations and timestamps.
+                </p>
+                <pre><code class="language-python">import numpy as np
 
-                <p>TODO: describe how runtime was measured, display results and discuss them</p>
+SIZE = 100_000_000
 
+x = np.random.normal(loc=0.0, scale=1.0, size=SIZE)
+y = x + np.random.uniform(low=0.0, high=1.0, size=SIZE)
+t = np.arange(SIZE)
+half_life = SIZE / 10</code></pre>
+                <br>
+                <p>
+                    Then, using the IPython magic function <code>%timeit</code>, we can record approximate runtimes for
+                    both algorithms on this input of 100 million observations, which I found to be:
+                </p>
+                <ul>
+                    <li>2.83s $\pm$ 26.8ms for the naive algorithm; and</li>
+                    <li>1.21s $\pm$ 5.45ms for the single-pass algorithm.</li>
+                </ul>
+                <p>
+                    We can therefore conclude that the single-pass algorithm runs in just 40% of the naive algorithm's
+                    runtime, which is a significant performance improvement!
+                </p>
+                <p>
+                    If you have any corrections or questions - please send me an email and we can have a discussion. Any
+                    edits or additions to the original article & code will be noted here.
+                </p>
             </section>
 
             <!-- Footer -->
