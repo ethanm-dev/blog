@@ -167,16 +167,143 @@
 
                 <h3>Implementation</h3>
                 <p>
-                    TODO
+                    Before implementing our single-pass algorithm, we will write a simple, naive function to compute
+                    the exponentially decayed covariance, such that we can compare the output of these two implementations
+                    for correctness. The naive approach uses basic Numpy array routines to calculate the covariance by the
+                    formula defined at the bottom of the "Definitions" section of this article.
                 </p>
+                <pre><code class="language-python">import numpy as np
+import numpy.typing as npt
+
+
+def naive_exp_covariance(
+    x: npt.NDArray,
+    y: npt.NDArray,
+    t: npt.NDArray,
+    half_life: int
+) -> float:
+    assert len(x) == len(y) == len(t), "Input arrays must have the same length"
+    assert half_life > 0, "Half-life must be a positive integer (seconds)"
+    assert np.all(np.diff(t) >= 0), "Observation timestamps t must be non-decreasing"
+
+    x_clean = x[(~np.isnan(x)) & (~np.isnan(y))]
+    y_clean = y[(~np.isnan(x)) & (~np.isnan(y))]
+    t_clean = t[(~np.isnan(x)) & (~np.isnan(y))]
+    x, y, t = x_clean, y_clean, t_clean
+
+    w = np.exp(-np.log(2) * (t[-1] - t) / half_life)
+    w_sum = np.sum(w)
+    w_sum_2 = np.sum(w ** 2)
+
+    x_mean = np.sum(w * x) / w_sum
+    y_mean = np.sum(w * y) / w_sum
+
+    return (w_sum / (w_sum ** 2 - w_sum_2)) * np.sum(w * (x - x_mean) * (y - y_mean))</code></pre>
+                <br>
+                <p>
+                    To achieve the best performance, we will implement our single-pass algorithm using Numba, a
+                    Python library that translates decorated functions into optimised machine code at runtime,
+                    allowing us to write our function in friendly Python syntax while still achieving C-like
+                    performance. Numba supports a subset of inbuilt Python & Numpy functionality, but is more than
+                    sufficient for our purposes here. We use the <code>@njit</code> decorator to indicate that
+                    our function should be compiled using Numba's JIT compiler, and we use Numba's provided types to
+                    specify the input and output types of our function. To call this function from our Python code,
+                    we simply provide Numpy arrays (with a matching <code>dtype</code>) as input and receive a
+                    float as output. Our single-pass algorithm receives just four inputs:
+                </p>
+                <ul>
+                    <li><code>x: types.float64[:]</code>: a Numpy array of floating point observations of $X$;</li>
+                    <li><code>y: types.float64[:]</code>: a Numpy array of floating point observations of $Y$;</li>
+                    <li><code>t: types.int64[:]</code>: a Numpy array of integer, epoch timestamps corresponding to the observations; and</li>
+                    <li><code>half_life: int</code>: the exponential decay half life for observation weight calculation in seconds.</li>
+                </ul>
+                <p>
+                    This algorithm will loop once through both arrays of observations. For each pair of
+                    non-NaN entries, we first compute the weight using the exponential decay formula, then update
+                    the linear and square weight sums and the weighted means of $X$ and $Y$ (using the recursive
+                    formulas derived at the beginning of the "Derivation" section above). Finally, we update the
+                    biased, weighted covariance using its recursive formula. The final result is then corrected to
+                    return the unbiased, weighted covariance as a floating point number.
+                </p>
+                <pre><code class="language-python">import numpy as np
+from numba import njit
+from numba.core import types
+
+
+@njit
+def exp_covariance(
+    x: types.float64[:],
+    y: types.float64[:],
+    t: types.int64[:],
+    half_life: int
+) -> float:
+    """
+    A single-pass, exponentially-decayed, unbiased covariance calculation, given
+    vectors of observations for random variables X and Y along with a vector of
+    observation timestamps t (seconds), and a half-life in seconds for the
+    exponential decay.
+    """
+
+    assert len(x) == len(y) == len(t), "Input arrays must have the same length"
+    assert half_life > 0, "Half-life must be a positive integer (seconds)"
+
+    w_sum = 0
+    w_sum_2 = 0
+    x_mean = 0
+    y_mean = 0
+    covariance = 0
+
+    for i in range(len(x)):
+        if not np.isnan(x[i]) and not np.isnan(y[i]):
+            w = np.exp(-np.log(2) * (t[-1] - t[i]) / half_life)
+            w_sum += w
+            w_sum_2 += w ** 2
+
+            x_mean_old = x_mean
+            x_mean = (1 - w / w_sum) * x_mean + (w / w_sum) * x[i]
+            y_mean = (1 - w / w_sum) * y_mean + (w / w_sum) * y[i]
+
+            covariance = (1 - w / w_sum) * covariance + (w / w_sum) * (x[i] - x_mean_old) * (y[i] - y_mean)
+
+    return (w_sum ** 2 / (w_sum ** 2 - w_sum_2)) * covariance</code></pre>
+<br>
 
                 <h3>Performance</h3>
-                <p>
-                    <pre><code class="language-python">
-                        def example(a: int, b: float) -> str:
-                            return f"The result is {a + b:.2f}"
-                    </code></pre>
-                </p>
+                <p>TODO: intro Pytest and explain testing accuracy here</p>
+                <pre><code class="language-python">import numpy as np
+import pytest
+
+from covariance import exp_covariance, naive_exp_covariance
+
+
+@pytest.mark.parametrize(
+    "x,y,t,half_life,expected_cov",
+    [
+        (
+            np.array([np.nan, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]),
+            np.array([0.0, np.nan, -1.0, -2.0, 0.0, 1.0, 2.0, 0.0]),
+            np.array([0, 60, 120, 180, 240, 300, 360, 420]),
+            120,
+            # x = [2.0,   3.0,  4.0,   5.0, 6.0,   7.0]
+            # y = [-1.0,  -2.0, 0.0,   1.0, 2.0,   0.0]
+            # t = [120,   180,  240,   300, 360,   420]
+            # w = [0.177, 0.25, 0.354, 0.5, 0.707, 1.0]
+            # w_sum = 2.988
+            # w_sum_2 = 1.969
+            # x_mean = 5.442,
+            # y_mean = 0.414
+            1.029
+        )
+    ]
+)
+def test_exp_covariance(x, y, t, half_life, expected_cov):
+    naive_cov = naive_exp_covariance(x, y, t, half_life)
+    fast_cov = exp_covariance(x, y, t, half_life)
+    assert abs(naive_cov - expected_cov) < 1e-3
+    assert abs(fast_cov - expected_cov) < 1e-3</code></pre>
+
+                <p>TODO: describe how runtime was measured, display results and discuss them</p>
+
             </section>
 
             <!-- Footer -->
