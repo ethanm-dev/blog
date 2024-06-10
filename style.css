@@ -264,7 +264,12 @@ ol#references {
     font-size: 1.5rem;
 }
 
-code {
+p code {
+    font-family: "Source Code Pro", monospace;
+    font-size: 1.1rem;
+}
+
+pre code.hljs  {
     font-family: "Source Code Pro", monospace;
     font-optical-sizing: auto;
     font-weight: 400;
