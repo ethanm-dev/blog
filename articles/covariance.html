@@ -6,7 +6,7 @@
         <meta name="description" content="Follow a derivation of Welford's method for computing weighted covariance and implement it in Python using Numba.">
         <meta name="author" content="Ethan Mitchell">
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-        <link rel="shortcut icon" type="image/png" href="/images/e.png"/>
+        <link rel="shortcut icon" type="image/png" href="images/e.png"/>
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
 
-        <link rel="stylesheet" href="../style.css?version=1">
+        <link rel="stylesheet" href="../style.css?version=3">
     </head>
     <body>
         <div id="wrapper">
@@ -45,8 +45,8 @@
 
                 <h3>Definitions</h3>
                 <p>
-                    The unweighted sample covariance (in $(-\infty,+\infty )$) of these observations is defined as:
-                    $$\text{Cov}(\boldsymbol{x}, \boldsymbol{y}) \> = \> \frac{\sum_{i=1}^N (x_i - x^*)(y_i - y^*)}{N-1}$$
+                    The unweighted sample covariance of these observations is defined as:
+                    $$\text{Cov}(\boldsymbol{x}, \boldsymbol{y}) \> = \> \frac{\sum_{i=1}^N (x_i - x^*)(y_i - y^*)}{N-1} \> \in \> (-\infty,+\infty )$$
                     where $N$ is the number of observations, $x^*$ is the mean of $\boldsymbol{x}$ and $y^*$ is the mean of
                     $\boldsymbol{y}$. This quantifies the relationship between the variances of $\boldsymbol{x}$ and $\boldsymbol{y}$:
                 </p>
@@ -59,16 +59,16 @@
                     To implement "exponential decay" using the non-decreasing observation times $\boldsymbol{t}$, given a
                     half life of $T$ seconds, we define observation weights:
                     $$w_i \> = \> 2^{-\frac{t_N - t_i}{T}}$$
-                    for $i \in [1, N]$, such that $w_N = 1$, $w_i = 0.5$ when $t_N - t_i = T$ (hence the name "half life")
-                    and $w_i \to 0$ as $t_i$ decreases. These weights are then used to compute weighted means of $\boldsymbol{x}$
-                    and $\boldsymbol{y}$:
-                    $$x^* = \frac{\sum_{i=1}^N w_i x_i}{\sum_{i=1}^N w_i}, \>\>\> y^* = \frac{\sum_{i=1}^N w_i y_i}{\sum_{i=1}^N w_i}.$$
+                    for $i \in [1, N]$, such that the final weight $w_N = 1$, an intermediate weight $w_i = \frac{1}{2}$
+                    when $t_N - t_i = T$ (hence the name "half life") and $w_i \to 0$ as $t_i$ decreases. These weights can
+                    then used to compute weighted means of $\boldsymbol{x}$ and $\boldsymbol{y}$:
+                    $$\mu = \frac{\sum_{i=1}^N w_i x_i}{\sum_{i=1}^N w_i} \>\> \text{ and } \>\> \nu = \frac{\sum_{i=1}^N w_i y_i}{\sum_{i=1}^N w_i}.$$
                     Using these, we can define the biased, weighted covariance of $\boldsymbol{x}$ and $\boldsymbol{y}$ as:
-                    $$\text{Cov}_B(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*)}{\sum_{i=1}^N w_i},$$
+                    $$\rho^2 \> = \> \frac{\sum_{i=1}^N w_i (x_i - \mu)(y_i - \nu)}{\sum_{i=1}^N w_i},$$
                     and the unbiased, weighted covariance as:
-                    $$\text{Cov}_U(\boldsymbol{x}, \boldsymbol{y}, \boldsymbol{w}) \> = \> \frac{\sum_{i=1}^N w_i}{\left( \sum_{i=1}^N w_i \right)^2 - \sum_{i=1}^N w_i^2} \sum_{i=1}^N w_i (x_i - x^*)(y_i - y^*).$$
-                    To help convince yourself of this definition, try substituting uniform weights of $w_i = 1$. The above
-                    expression will reduce to the unweighted sample covariance we defined at the beginning of this section.
+                    $$\phi^2 \> = \> \frac{\sum_{i=1}^N w_i}{\left( \sum_{i=1}^N w_i \right)^2 - \sum_{i=1}^N w_i^2} \sum_{i=1}^N w_i (x_i - \mu)(y_i - \nu).$$
+                    To help convince yourself of this definition, try substituting uniform weights $w_i = 1$. The above
+                    expression will reduce to the unweighted sample covariance defined at the beginning of this section.
                 </p>
 
                 <h3>Derivation</h3>
@@ -127,13 +127,12 @@
                     \end{aligned}$$
                     which is Welford's method: a formula for the $n^{\text{th}}$ weighted variance with respect
                     to the $(n-1)^{\text{th}}$ weighted variance and the $n^{\text{th}}$ observation (as well
-                    as the $(n-1)^{\text{th}}$ and $n^{\text{th}}$ weighted means).
-                </p>
-                <p>
-                    We can generalise Welford's method for the variance $\sigma_n^2$ to the biased, weighted covariance
-                    $\rho_n^2$ of the first $n$ observations of $X$ and $Y$, given weighted means $\mu_n$ and $\nu_n$
-                    respectively. Skipping the proof of this generalisation, we have that $\rho_n^2 = \frac{\gamma_n}{W_n}$
-                    where
+                    as the $(n-1)^{\text{th}}$ and $n^{\text{th}}$ weighted means). Now consider the biased,
+                    weighted covariance of the first $n$ observations of $X$ and $Y$, given weighted means
+                    $\mu_n$ and $\nu_n$ respectively:
+                    $$\rho_n^2 \> = \> \frac{\sum_{i=1}^n w_i(x_i - \mu_n)(y_i - \nu_n)}{W_n}.$$
+                    We can generalise Welford's method for the variance $\sigma_n^2$ to the covariance $\rho_n^2$.
+                    Skipping the proof of this generalisation, we have that $\rho_n^2 = \frac{\gamma_n}{W_n}$ where
                     $$\begin{aligned}
                         \gamma_n \> &= \> \sum_{i=1}^n w_i (x_i - \mu_n)(y_i - \nu_n) \\
                         &= \> \gamma_{n-1} + w_n(x_n - \mu_n)(y_n - \nu_{n-1}) \\
@@ -148,11 +147,9 @@
                         &= \> \frac{W_{n-1}}{W_n} \rho_{n-1}^2 + \frac{w_n}{W_n} (x_n - \mu_{n-1})(y_n - \nu_n) \\
                         &= \> \left( 1 - \frac{w_n}{W_n} \right) \rho_{n-1}^2 + \frac{w_n}{W_n} (x_n - \mu_{n-1})(y_n - \nu_n),
                     \end{aligned}$$
-                    which is Welford's formula for the $n^{\text{th}}$ weighted covariance.
-                </p>
-                <p>
-                    Finally, to compute the unbiased, weighted covariance
-                    $$\phi_n^2 \> = \> \frac{W_n}{W_n^2 - \sum_{i=1}^n w_i^2} \sum_{i=1}^n w_i(x_i - \mu_n^2)(y_i - \nu_n^2),$$
+                    which is Welford's formula for the $n^{\text{th}}$ weighted covariance. Finally, to compute the
+                    unbiased, weighted covariance
+                    $$\phi_n^2 \> = \> \frac{W_n}{W_n^2 - \sum_{i=1}^n w_i^2} \sum_{i=1}^n w_i(x_i - \mu_n)(y_i - \nu_n),$$
                     we can simply multiply the biased, weighted covariance by a correction factor:
                     $$\phi_n^2 \> = \> \frac{W_n^2}{W_n^2 - \sum_{i=1}^n w_i^2} \rho_n^2,$$
                     which can simply be applied to the final covariance result before our algorithm terminates.
@@ -161,7 +158,7 @@
                 <h3>Implementation</h3>
                 <p>
                     Before implementing our single-pass algorithm, we will write a simple, naive function to compute
-                    the exponentially decayed covariance, such that we can compare the output of these two implementations
+                    the exponentially decayed covariance, such that we can compare the output of our two implementations
                     for correctness. The naive approach uses basic
                     <a href="https://numpy.org/doc/stable/user/whatisnumpy.html" target="_blank">Numpy</a> array routines to calculate the
                     covariance by the formula defined at the bottom of the "Definitions" section of this article.
@@ -268,7 +265,7 @@ def exp_covariance(
                     To assess the accuracy of both our naive and single-pass algorithms, we can write a simple test case
                     using <a href="https://docs.pytest.org/en/latest/" target="_blank">Pytest</a>, which is Python's most
                     popular testing framework. For this test case, we include some NaN values to ensure that both
-                    algorithms handle missing data correctly. After manually calculating the weighted covariance on the
+                    algorithms handle missing data correctly. After manually calculating the weighted covariance of the
                     test data, we can assert that the output of both algorithms is within a small tolerance of the
                     expected result.
                 </p>
@@ -334,10 +331,6 @@ half_life = SIZE / 10</code></pre>
                     We can therefore conclude that the single-pass algorithm runs in just 40% of the naive algorithm's
                     runtime, which is a significant performance improvement!
                 </p>
-                <p>
-                    If you have any corrections or questions - please send me an email and we can have a discussion. Any
-                    edits or additions to the original article & code will be noted here.
-                </p>
 
                 <h3>References</h3>
                 <ol id="references">
@@ -350,6 +343,10 @@ half_life = SIZE / 10</code></pre>
                         <a href="https://justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/" target="_blank">justinwillmert.com/articles/2022/notes-on-calculating-online-statistics/</a>.
                     </li>
                 </ol>
+                <p>
+                    If you have any corrections or questions - please send me an email and we can have a discussion. Any
+                    edits or additions to the original article & code will be noted here.
+                </p>
             </section>
 
             <!-- Footer -->
