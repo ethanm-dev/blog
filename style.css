@@ -247,7 +247,7 @@ ol#references {
     text-align: center;
     padding-left: 10%;
     padding-right: 10%;
-    padding-top: 2rem;
+    padding-top: 3.5rem;
     padding-bottom: 1rem;
 }
 
@@ -280,9 +280,9 @@ pre code.hljs  {
     font-size: 1rem;
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 1000px) {
     .content {
-        padding: 2rem 2rem 1rem 2rem;
+        padding: 2rem 2rem 1rem 2rem !important;
     }
 
     .image {
@@ -295,5 +295,30 @@ pre code.hljs  {
 
     h2 {
         font-size: 2.5rem;
+    }
+
+    .article-title h1 {
+        font-size: 2rem;
+    }
+
+    .article-body {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .article-body h3 {
+        font-size: 1.7rem;
+    }
+
+    .article-body p, .article-body li, .article-body mjx-container {
+        font-size:1.1rem;
+    }
+
+    .article-body mjx-container {
+        overflow-x: scroll;
+        overflow-y: hidden;
+        padding-bottom: 5px;
     }
 }
