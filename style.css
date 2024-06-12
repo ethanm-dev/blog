@@ -301,6 +301,10 @@ pre code.hljs  {
         font-size: 2rem;
     }
 
+    .article-title p.major {
+        font-size: 1.4rem;
+    }
+
     .article-body {
         padding-left: 20px;
         padding-right: 20px;
