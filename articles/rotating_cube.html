@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Rotating cube from scratch with PyOpenGL</title>
+        <meta charset="utf-8" />
+        <meta name="description" content="A guide to the mathematics behind 3D graphics and a tutorial on rendering a cube in Python using PyOpenGL.">
+        <meta name="author" content="Ethan Mitchell">
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <link rel="shortcut icon" type="image/png" href="images/e.png"/>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+
+        <link rel="stylesheet" href="../style.css?version=6">
+    </head>
+    <body>
+        <div id="wrapper">
+
+            <!-- Title-->
+            <section class="article-title">
+                <h1>Rotating cube from scratch with PyOpenGL</h1>
+                <p class="major">July 2024</p>
+                <a id="home-button" href="../index.html">&lt;&nbsp;&nbsp;Home</a>
+            </section>
+
+            <!-- Content -->
+            <section class="article-body">
+                <h3>Context</h3>
+                <p>
+                    Suppose there are two jointly distributed (i.e, not independent) random variables $X$ and $Y$, for which
+                    we have corresponding vectors of observations $\boldsymbol{x}$ and $\boldsymbol{y}$, recorded at epoch
+                    timestamps $\boldsymbol{t}$ seconds. We wish to measure a weighted sample covariance between these
+                    observations, with weights derived from observation times, where the most recent observations have the
+                    largest weights. For performance reasons, our algorithm should only utilise a "single pass", meaning we
+                    iterate through the vectors $\boldsymbol{x}$, $\boldsymbol{y}$ and $\boldsymbol{t}$ only once.
+                </p>
+
+                <h3>OpenGL Overview</h3>
+                <p>TODO</p>
+
+                <h3>Model Matrix</h3>
+                <p>TODO incl implementation</p>
+
+                <h3>View Matrix</h3>
+                <p>TODO incl implementation</p>
+
+                <h3>Projection Matrix</h3>
+                <p>TODO incl implementation</p>
+
+                <h3>PyOpenGL Implementation</h3>
+                <p>TODO</p>
+
+                <h3>References</h3>
+                <p>TODO</p>
+            </section>
+
+            <!-- Footer -->
+            <footer>
+                <div class="inner">
+                    <p style="margin-bottom: 5px;">Copyright &copy; Ethan Mitchell 2024</p>
+                    <p style="margin-bottom: 5px;">ethanmitchell98@gmail.com</p>
+                </div>
+            </footer>
+
+        </div>
+    </body>
+
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+</html>
