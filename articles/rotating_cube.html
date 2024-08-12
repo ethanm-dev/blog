@@ -39,11 +39,36 @@
                     lower-level API library, providing a close replica of the OpenGL API in Python.
                 </p>
                 <p>
-                    TODO: explain article layout & purpose
+                    This article provides a basic overview of the OpenGL API, before detailing the mathematical
+                    transformations required to render a 3D cube in a 2D display. This theory is demonstrated via an
+                    implementation of the classic rotating cube exercise in PyOpenGL, without relying on GLM, which is OpenGL's
+                    mathematics library. This library abstracts the underlying maths by providing a set of functions for
+                    constructing transformation matrices, but we will instead implement these transformations ourselves.
                 </p>
 
                 <h3>OpenGL Overview</h3>
-                <p>TODO</p>
+                <p>
+                    The OpenGL API operates like a state machine which we can interact with in one of two ways: by calling
+                    a function which changes the state (e.g., linking a new shader program) or by calling a function which
+                    performs an action using the current state (e.g., drawing a shape to the screen). This state is called
+                    the OpenGL context and is organised like a C struct, where different sub-components (called objects) can
+                    be swapped in and out (called binding and unbinding respectively). 
+                </p>
+                <p>
+                    The transformation of 3D objects in memory to 2D pixels on a screen is performed by OpenGL's graphics
+                    pipeline, comprised of a sequence of programs called shaders which run on the GPU and are written
+                    in GLSL (the openGL Shading Language). Modern GPUs have hundreds or even thousands of cores, each capable
+                    of running a shader in parallel, which is why GPUs are so much faster than CPUs for graphics processing
+                    (modern CPUs typically have 4-8 far more generalised cores). The graphics pipeline is as follows:
+                    <ol>
+                        <li>vertex shader - TODO (can define our own);</li>
+                        <li>geometry shader - TODO (can define our own);</li>
+                        <li>shape assembly - TODO;</li>
+                        <li>rasterisation - TODO;</li>
+                        <li>fragment shader - TODO (can define our own); and</li>
+                        <li>tests & blending - TODO.</li>
+                    </ol>
+                </p>
 
                 <h3>Model Matrix</h3>
                 <p>TODO incl implementation</p>
