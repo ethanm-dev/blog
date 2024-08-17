@@ -59,24 +59,56 @@
                     pipeline, comprised of a sequence of programs called shaders which run on the GPU and are written
                     in GLSL (the openGL Shading Language). Modern GPUs have hundreds or even thousands of cores, each capable
                     of running a shader in parallel, which is why GPUs are so much faster than CPUs for graphics processing
-                    (modern CPUs typically have 4-8 far more generalised cores). The graphics pipeline is as follows:
+                    (modern CPUs typically have 4-8 far more generalised cores).
+                </p>
+                <p>
+                    The first stage of the graphics pipeline is the vertex shader, for which there is no default (we must
+                    provide our own implementation of this step). This shader receives a single vertex as input, whose 3D
+                    coordinates $(x,y,z)$ are in "local space", meaning they are relative to the origin of the object the
+                    vertex belongs to. This shader is responsible for converting these local coordinates into 3D homogeneous
+                    "clip space" coordinates $(x_C, y_C, z_C, w_C)$, which are then used to determine which parts of objects
+                    are visible on the screen. The vertex shader also forwards any other data associated with the vertex
+                    for use in later stages of the pipeline (such as 2D texture coordinates). The vertex shader achieves
+                    the local to clip space conversion by applying a sequence of transformations:
                     <ol>
-                        <li>vertex shader - TODO (can define our own);</li>
-                        <li>geometry shader - TODO (can define our own);</li>
-                        <li>shape assembly - TODO;</li>
-                        <li>rasterisation - TODO;</li>
-                        <li>fragment shader - TODO (can define our own); and</li>
-                        <li>tests & blending - TODO.</li>
+                        <li>
+                            the model transformation converts local coordinates to world coordinates, using information
+                            about the object's position, orientation and size in the world we are rendering, and hence
+                            is the combination of a scale, translation and rotation transformation;
+                        </li>
+                        <li>
+                            the view transformation converts world coordinates to view/camera coordinates, using information
+                            about the position and orientation of the camera in the world, and hence is the combination of a
+                            translation and rotation transformation; and
+                        </li>
+                        <li>
+                            the projection transformation converts view coordinates to clip coordinates (NDC), using
+                            information about the camera's type (orthographic or perspective), field of view and range.
+                        </li>
                     </ol>
                 </p>
+                <p>
+                    Following the vertex shader in the graphics pipeline (ignoring some advanced, optional steps) is the primitive
+                    assembly stage, where a set of processed vertices are grouped into a sequence of primitives (points, lines or
+                    triangles, depending on the context). Next is the clipping stage, where primitives lying outside the viewing
+                    volume (defined by $-w_C \le x_C \le w_C$ and likewise for $y_C$ and $z_C$) are discarded, and primitives
+                    only partially inside the volume are clipped to fit within it (a triangle may be split into multiple triangles
+                    here). Next is the perspective divide
+                    $$(x_{\text{NDC}}, y_{\text{NDC}}, z_{\text{NDC}}) \> = \> (\frac{x_C}{w_C}, \frac{y_C}{w_C}, \frac{z_C}{w_C})$$
+                    into normalised device coordinates where $|x_{\text{NDC}}| \le 1$, $|y_{\text{NDC}}| \le 1$ and
+                    $|z_{\text{NDC}}| \le 1$. After this is the viewport transformation, which converts NDC to window coordinates,
+                    which depends on the window size in pixels and the size of the device's depth buffer. Next is face culling,
+                    where triangle primitives facing away from view in window space can be discarded, such that they don't need
+                    to be rendered.
+                </p>
 
-                <h3>Model Matrix</h3>
+                <h3>Model Transformation</h3>
                 <p>TODO incl implementation</p>
 
-                <h3>View Matrix</h3>
+                <h3>View Transformation</h3>
                 <p>TODO incl implementation</p>
 
-                <h3>Projection Matrix</h3>
+                <h3>Projection Transformation</h3>
                 <p>TODO incl implementation</p>
 
                 <h3>PyOpenGL Implementation</h3>
@@ -84,6 +116,9 @@
 
                 <h3>References</h3>
                 <p>TODO</p>
+                https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview
+                https://learnopengl.com/Getting-started/OpenGL
+
             </section>
 
             <!-- Footer -->
