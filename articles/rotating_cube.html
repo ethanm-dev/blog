@@ -99,7 +99,33 @@
                     $|z_{\text{NDC}}| \le 1$. After this is the viewport transformation, which converts NDC to window coordinates,
                     which depends on the window size in pixels and the size of the device's depth buffer. Next is face culling,
                     where triangle primitives facing away from view in window space can be discarded, such that they don't need
-                    to be rendered.
+                    to be rendered. Then the pipeline performs rasterisation, where each primitive is mapped to a set fragments,
+                    with at least one fragment per pixel displaying the primitive. A fragment is a collection of all data required
+                    to render a single pixel (which includes data that was forwarded from the vertex shader).
+                </p>
+                <p>
+                    The next stage is the fragment shader, which, like the vertex shader, has no default implementation. This shader
+                    receives a single fragment as input and returns a colour to be drawn to the screen at its corresponding pixel
+                    (as well as some other data including depth). The final stage of the graphics pipeline is a sequence of
+                    "per-sample" operations on each fragment, which include pixel ownership testing (which fails if the fragment's
+                    pixel location is owned by another overlapping window), depth testing (checking if this fragment is behind
+                    another fragment and should be discarded) and blending (combining the fragment's colour with a colour already
+                    in the frame buffer for this pixel, to handle opacity).
+                </p>
+
+                <h3>Transformation Matrices</h3>
+                <p>
+                    Before we start programming with PyOpenGL, we first need to define the model, view and projection
+                    transformations required to implement our vertex shader.
+                    TODO: explain 3D homogeneous coordinates and 4D matrix, combination of transform is matrix product
+
+                    A scale transformation with scaling factors $s_X, s_Y$ and $s_Z$ converts a point $(x,y,z,1)$ to the
+                    point $(s_X x, s_Y y, s_Z z, 1)$, which is achieved by multiplying by the diagonal matrix
+                    $$\begin{pmatrix} s_X & 0 & 0 & 0 \\ 0 & s_Y & 0 & 0 \\ 0 & 0 & s_Z & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
+                    A translation transformation with translates by distance $t_X$ in the $x$-direction, $t_Y$ in the $y$-direction
+                    and $t_Z$ in the $z$-direction, thus converting a point $(x,y,z,1)$ to the point $(x + t_X, y + t_Y, z + t_Z, 1)$,
+                    is achieved by the matrix:
+                    $$\begin{pmatrix} 1 & 0 & 0 & t_X \\ 0 & 1 & 0 & t_Y \\ 0 & 0 & 1 & t_Z \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
                 </p>
 
                 <h3>Model Transformation</h3>
