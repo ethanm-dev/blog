@@ -116,26 +116,241 @@
                 <h3>Transformation Matrices</h3>
                 <p>
                     Before we start programming with PyOpenGL, we first need to define the model, view and projection
-                    transformations required to implement our vertex shader.
-                    TODO: explain 3D homogeneous coordinates and 4D matrix, combination of transform is matrix product
-
+                    transformations required to implement our vertex shader. Given a vertex with coordinates $(x,y,z)$, we
+                    represent this point in space by the vector of homogeneous coordinates
+                    $$\begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix},$$
+                    where the fourth coordinate will remain 1 until the projection transformation. Given this definition, we can
+                    represent a transformation of this point by a 4x4 matrix that is left-multiplied by the vector. An affine
+                    transformation such as a scaling, translation or rotation can be achieved with a matrix multiplication of
+                    the form
+                    $$
+                    \begin{pmatrix}
+                        m_{11} & m_{12} & m_{13} & 0 \\
+                        m_{21} & m_{22} & m_{23} & 0 \\
+                        m_{31} & m_{32} & m_{33} & 0 \\
+                        0 & 0 & 0 & 1
+                    \end{pmatrix}
+                    \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} \> = \>
+                    \begin{pmatrix}
+                        m_{11} x + m_{12} y + m_{13} z \\
+                        m_{21} x + m_{22} y + m_{23} z \\
+                        m_{31} x + m_{32} y + m_{33} z \\
+                        1
+                    \end{pmatrix},
+                    $$
+                    and hence combining transformations is equivalent to multiplying their representative matrices.
+                </p>
+                <p>
                     A scale transformation with scaling factors $s_X, s_Y$ and $s_Z$ converts a point $(x,y,z,1)$ to the
                     point $(s_X x, s_Y y, s_Z z, 1)$, which is achieved by multiplying by the diagonal matrix
                     $$\begin{pmatrix} s_X & 0 & 0 & 0 \\ 0 & s_Y & 0 & 0 \\ 0 & 0 & s_Z & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
-                    A translation transformation with translates by distance $t_X$ in the $x$-direction, $t_Y$ in the $y$-direction
-                    and $t_Z$ in the $z$-direction, thus converting a point $(x,y,z,1)$ to the point $(x + t_X, y + t_Y, z + t_Z, 1)$,
-                    is achieved by the matrix:
-                    $$\begin{pmatrix} 1 & 0 & 0 & t_X \\ 0 & 1 & 0 & t_Y \\ 0 & 0 & 1 & t_Z \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
+                    We can write a Python function which returns this matrix as a 2D NumPy array given a set of scaling factors.
                 </p>
+                <pre>
+                    <code class="language-python">import numpy as np
+import numpy.typing as npt
+
+
+def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
+    assert s_x > 0 and s_y > 0 and s_z > 0, "Input factors must be positive"
+    return np.array([
+        [s_x, 0.0, 0.0, 0.0],
+        [0.0, s_y, 0.0, 0.0],
+        [0.0, 0.0, s_z, 0.0],
+        [0.0, 0.0, 0.0, 1.0]
+    ])</code>
+                </pre>
+                <br>
+                <p>
+                    A translation transformation which translates by distance $t_X$ in the $x$-direction, $t_Y$ in the
+                    $y$-direction and $t_Z$ in the $z$-direction, thus converting a point $(x,y,z,1)$ to the point
+                    $(x + t_X, y + t_Y, z + t_Z, 1)$, is achieved by the matrix:
+                    $$\begin{pmatrix} 1 & 0 & 0 & t_X \\ 0 & 1 & 0 & t_Y \\ 0 & 0 & 1 & t_Z \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
+                    This transformation can also be implemented as a simple Python function.
+                </p>
+                <pre>
+                    <code class="language-python">def translation_matrix(t_x: float, t_y: float, t_z: float) -> npt.NDArray:
+    return np.array([
+        [1.0, 0.0, 0.0, t_x],
+        [0.0, 1.0, 0.0, t_y],
+        [0.0, 0.0, 1.0, t_z],
+        [0.0, 0.0, 0.0, 1.0]
+    ])</code>
+                </pre>
+                <br>
+                <p>
+                    A rotation in 3D space is defined by a (unit vector) axis and an angle of rotation about that axis.
+                    A rotation about the $x$-axis by angle $\theta$ is represented by:
+                    $$\begin{pmatrix}
+                        1 & 0 & 0 & 0 \\
+                        0 & \cos \theta & -\sin \theta & 0 \\
+                        0 & \sin \theta & \cos \theta & 0 \\
+                        0 & 0 & 0 & 1
+                    \end{pmatrix},$$
+                    a rotation about the $y$-axis by angle $\theta$ is represented by:
+                    $$\begin{pmatrix}
+                        \cos \theta & 0 & \sin \theta & 0 \\
+                        0 & 1 & 0 & 0 \\
+                        -\sin \theta & 0 & \cos \theta & 0 \\
+                        0 & 0 & 0 & 1
+                    \end{pmatrix},$$
+                    and a rotation about the $z$-axis by angle $\theta$ is represented by:
+                    $$\begin{pmatrix}
+                        \cos \theta & -\sin \theta & 0 & 0 \\
+                        \sin \theta & \cos \theta & 0 & 0 \\
+                        0 & 0 & 1 & 0 \\
+                        0 & 0 & 0 & 1
+                    \end{pmatrix}.$$
+                    As an example, take the point $(x,y,z) = (1,1,0)$ and apply a rotation about the $z$-axis by 180
+                    degrees (or $\pi$ radians):
+                    $$
+                    \begin{pmatrix}
+                        \cos \pi & -\sin \pi & 0 & 0 \\
+                        \sin \pi & \cos \pi & 0 & 0 \\
+                        0 & 0 & 1 & 0 \\
+                        0 & 0 & 0 & 1
+                    \end{pmatrix}
+                    \begin{pmatrix} 1 \\ 1 \\ 0 \\ 1 \end{pmatrix} \> = \>
+                    \begin{pmatrix}
+                        -1 & 0 & 0 & 0 \\
+                        0 & -1 & 0 & 0 \\
+                        0 & 0 & 1 & 0 \\
+                        0 & 0 & 0 & 1
+                    \end{pmatrix}
+                    \begin{pmatrix} 1 \\ 1 \\ 0 \\ 1 \end{pmatrix} \> = \>
+                    \begin{pmatrix} -1 \\ -1 \\ 0 \\ 1 \end{pmatrix}
+                    $$
+                    which is the expected result. A rotation about an arbitrary unit vector axis $(r_X,r_Y,r_Z)$ by angle
+                    $\theta$ is represented by the matrix
+                    $$
+                    \begin{pmatrix}
+                        \cos \theta + r_X^2 (1 - \cos \theta) & r_X r_Y (1 - \cos \theta) - r_Z \sin \theta & r_X r_Z (1 - \cos \theta) + r_Y \sin \theta & 0 \\
+                        r_Y r_X (1 - \cos \theta) + r_Z \sin \theta & \cos \theta + r_Y^2 (1 - \cos \theta) & r_Y r_Z (1 - \cos \theta) - r_X \sin \theta & 0 \\
+                        r_Z r_X (1 - \cos \theta) - r_Y \sin \theta & r_Z r_Y (1 - \cos \theta) + r_X \sin \theta & \cos \theta + r_Z^2 (1 - \cos \theta) & 0 \\
+                        0 & 0 & 0 & 1
+                    \end{pmatrix},
+                    $$
+                    which could also be achieved by a product of the three basis vector rotations (but such an approach can
+                    lead to numerical instability, so this direct rotation should be preferred). We can write a flexible
+                    Python function which will allow us to use either approach, saving some unnecessary computation if we
+                    wish to rotate about a basis vector.
+                </p>
+                <pre>
+                    <code class="language-python">def rotation_matrix(
+    r_x: float,
+    r_y: float,
+    r_z: float,
+    theta_deg: float = 0.0,
+    theta_rad: float = 0.0
+) -> npt.NDArray:
+    # convert input to radians
+    assert (theta_deg == 0.0) != (theta_rad == 0.0), "Exactly one theta input must be provided"
+    if theta_rad == 0.0:
+        theta_rad = theta_deg * np.pi / 180.0
+
+    # ensure rotation axis is normalised
+    axis_norm = np.sqrt(r_x**2 + r_y**2 + r_z**2)
+    r_x /= axis_norm
+    r_y /= axis_norm
+    r_z /= axis_norm
+
+    # pre-compute sin and cos of theta
+    sin = np.sin(theta_rad)
+    cos = np.cos(theta_rad)
+
+    if r_x == 1.0 and r_y == 0.0 and r_z == 0.0:
+        return np.array([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, cos, -sin, 0.0],
+            [0.0, sin, cos, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ])
+    elif r_x == 0.0 and r_y == 1.0 and r_z == 0.0:
+        return np.array([
+            [cos, 0.0, sin, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [-sin, 0.0, cos, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ])
+    elif r_x == 0.0 and r_y == 1.0 and r_z == 0.0:
+        return np.array([
+            [cos, -sin, 0.0, 0.0],
+            [sin, cos, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ])
+    else:
+        return np.array([
+            [cos + r_x**2 * (1 - cos), r_x * r_y * (1 - cos) - r_z * sin, r_x * r_z * (1 - cos) + r_y * sin, 0.0],
+            [r_y * r_x * (1 - cos) + r_z * sin, cos + r_y**2 * (1 - cos), r_y * r_z * (1 - cos) - r_x * sin, 0.0],
+            [r_z * r_x * (1 - cos) - r_y * sin, r_z * r_y * (1 - cos) + r_x * sin, cos + r_z**2 * (1 - cos), 0.0],
+            [0.0,  0.0, 0.0, 1.0]
+        ])</code>
+                </pre>
+                <br>
 
                 <h3>Model Transformation</h3>
-                <p>TODO incl implementation</p>
+                <p>
+                    The model transformation in the vertex shader transforms a vertex's local coordinates to world
+                    coordinates, using the position, orientation and scale of the object that the vertex belongs to. Hence,
+                    the model transformation matrix is the product of a scale, rotation and translation matrix (in that
+                    order, as scaling after translating would also scale the translation). We can use the functions we
+                    wrote in the previous section to construct this matrix in Python.
+                </p>
+                <pre><code class="language-python">def model_matrix(
+    scale_x: float = 1.0,
+    scale_y: float = 1.0,
+    scale_z: float = 1.0,
+    rot_axis_x: float = 0.0,
+    rot_axis_y: float = 0.0,
+    rot_axis_z: float = 1.0,
+    rot_theta_deg: float = 0.0,
+    rot_theta_rad: float = 0.0,
+    trans_x: float = 0.0,
+    trans_y: float = 0.0,
+    trans_z: float = 0.0
+) -> npt.NDArray:
+    model = scale_matrix(scale_x, scale_y, scale_z)
+    if rot_theta_deg != 0.0 or rot_theta_rad != 0.0:
+        model @= rotation_matrix(rot_axis_x, rot_axis_y, rot_axis_z, rot_theta_deg, rot_theta_rad)
+    if trans_x != 0.0 or trans_y != 0.0 or trans_z != 0.0:
+        model @= translation_matrix(trans_x, trans_y, trans_z)
+    return model</code></pre>
+                <br>
 
                 <h3>View Transformation</h3>
-                <p>TODO incl implementation</p>
+                <p>
+                    The view transformation in the vertex shader transforms a vertex's world coordinates to view
+                    coordinates, using the position and orientation of the camera in the world, in order to render
+                    the world from the camera's perspective. Hence, the view transformation matrix is the product
+                    of a translation and rotation matrix (in that order, as the rotation axis should stem from the
+                    camera's position). Constructing the view matrix in Python is even simpler than the model matrix.
+                </p>
+                <pre><code class="language-python">def view_matrix(
+    camera_x: float = 0.0,
+    camera_y: float = 0.0,
+    camera_z: float = 0.0,
+    rot_axis_x: float = 0.0,
+    rot_axis_y: float = 0.0,
+    rot_axis_z: float = 1.0,
+    rot_theta_deg: float = 0.0,
+    rot_theta_rad: float = 0.0
+) -> npt.NDArray:
+    model = translation_matrix(camera_x, camera_y, camera_z)
+    if rot_theta_deg != 0.0 or rot_theta_rad != 0.0:
+        model @= rotation_matrix(rot_axis_x, rot_axis_y, rot_axis_z, rot_theta_deg, rot_theta_rad)
+    return model</code>
+                </pre>
+                <br>
 
                 <h3>Projection Transformation</h3>
-                <p>TODO incl implementation</p>
+                <p>
+                    TODO:
+                    the projection transformation converts view coordinates to clip coordinates (NDC), using
+                    information about the camera's type (orthographic or perspective), field of view and range
+                    - explain purpose of projection and choice of perspective, make far away objects smaller
+                    - derive perspective matrix using songho guide
+                </p>
 
                 <h3>PyOpenGL Implementation</h3>
                 <p>TODO</p>
@@ -144,7 +359,7 @@
                 <p>TODO</p>
                 https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview
                 https://learnopengl.com/Getting-started/OpenGL
-
+                https://www.songho.ca/opengl/gl_projectionmatrix.html
             </section>
 
             <!-- Footer -->
