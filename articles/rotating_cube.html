@@ -82,8 +82,9 @@
                             translation and rotation transformation; and
                         </li>
                         <li>
-                            the projection transformation converts view coordinates to clip coordinates (NDC), using
-                            information about the camera's type (orthographic or perspective), field of view and range.
+                            the projection transformation converts camera coordinates to clip space coordinates, using
+                            information about the camera's type (orthographic or perspective), field of view, aspect ratio
+                            and range.
                         </li>
                     </ol>
                 </p>
@@ -139,6 +140,9 @@
                     \end{pmatrix},
                     $$
                     and hence combining transformations is equivalent to multiplying their representative matrices.
+                    The inclusion of the fourth coordinate may seem pointless, but it allows us to represent translation
+                    and perspective projection transformations as matrix multiplications, which would not be possible with
+                    3x3 matrices.
                 </p>
                 <p>
                     A scale transformation with scaling factors $s_X, s_Y$ and $s_Z$ converts a point $(x,y,z,1)$ to the
@@ -181,6 +185,8 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                 <p>
                     A rotation in 3D space is defined by a (unit vector) axis and an angle of rotation about that axis.
                     A rotation about the $x$-axis by angle $\theta$ is represented by:
+                    TODO: derive one of the below matrices and remove the combined one from the function
+                    https://austinmorlan.com/posts/rotation_matrices/
                     $$\begin{pmatrix}
                         1 & 0 & 0 & 0 \\
                         0 & \cos \theta & -\sin \theta & 0 \\
@@ -345,11 +351,109 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
 
                 <h3>Projection Transformation</h3>
                 <p>
-                    TODO:
-                    the projection transformation converts view coordinates to clip coordinates (NDC), using
-                    information about the camera's type (orthographic or perspective), field of view and range
-                    - explain purpose of projection and choice of perspective, make far away objects smaller
-                    - derive perspective matrix using songho guide
+                    The perspective projection transformation defines a "rectangular frustum" volume in camera space which is
+                    indirectly transformed to the $[-1,+1]$ cube in NDC/viewport space. This frustum is a sideways pyramid with
+                    a rectangle for a base and its apex cut off (with the base facing away from the camera and the clipped apex
+                    pointing towards the camera). We say "indirectly", because this matrix actually transforms from camera space
+                    to "clip space" (which still uses 3D homogeneous coordinates), which is a precursor to NDC space. After the
+                    vertex shader, OpenGL efficiently performs the perspective divide to convert clip space coordinates to NDC,
+                    which completes the transformation from the frustum to the cube.
+                </p>
+                <p>
+                    The inputs defining this transformation are:
+                    <ul>
+                        <li>
+                            the vertical field of view $\theta_y$ which is the angle from the bottom to the top of the view from the
+                            camera's origin (equivalently, the angle from the bottom to the top of the frustum from the apex);
+                        </li>
+                        <li>
+                            the aspect ratio $A$ which is the screen width in pixels divided by the screen height in pixels,
+                            which is used to derive the horizontal field of view (typical aspect ratios are 16:9 or 4:3);
+                        </li>
+                        <li>
+                            the distance $Z_{\text{near}}$ along the $z$-axis from the camera's origin to the near clipping
+                            plane (the close rectangle of the frustum where the apex is cut off) (note this parameter is positive
+                            because it is a distance, despite the clipping planes having negative $z$-coordinates in camera space);
+                            and
+                        </li>
+                        <li>
+                            the distance $Z_{\text{far}}$ along the $z$-axis from the camera's origin to the far clipping plane
+                            (the base of the frustum).
+                        </li>
+                    </ul>
+                </p>
+                <p>
+                    TODO: DIAGRAM OF FRUSTUM HERE SIDE-VIEW HERE!
+                </p>
+                <p>
+                    To derive the perspective projection matrix, let's forget about clip space for a moment and instead consider
+                    the whole transformation from camera space to NDC (i.e., from the frustum to the $[-1,1]$ cube). We will
+                    denote camera space coordinates by $x_{\text{cam}}$, $y_{\text{cam}}$ and $z_{\text{cam}}$, and NDC coordinates
+                    by $x_{\text{NDC}}$, $y_{\text{NDC}}$ and $z_{\text{NDC}}$.
+                </p>
+                <p> 
+                    Given some $z_{\text{cam}}$ \in $[-Z_{\text{far}}, -Z_{\text{near}}]$ inside the frustum, we can draw a right-
+                    angled triangle on the $zy$-plane between the points $(0,0,0)$, $(0,0,z_{\text{cam}})$ and
+                    $(0,y_{\text{bdy}},z_{\text{cam}})$, where $y_{\text{bdy}}$ is the half-height of the frustum at this
+                    $z$-coordinate (so the third point lies on the top trapezium face of the frustum). The angle inside this triangle
+                    at the origin is $\frac{\theta_y}{2}$, and hence we can claim that
+                    $$\begin{aligned}
+                        \tan\left(\frac{\theta_y}{2}\right) \> &= \> \frac{y_{\text{bdy}}}{-z_{\text{cam}}} \\
+                        \Rightarrow \> y_{\text{bdy}} \> &= \> \tan\left(\frac{\theta_y}{2}\right) \cdot -z_{\text{cam}} \\
+                        &= \> \frac{-z_{\text{cam}}}{F_y},
+                    \end{aligned}$$
+                    by defining the constant factor
+                    $$F_y \> = \> \frac{1}{\tan\left(\frac{\theta_y}{2}\right)}.$$
+                    We have derived an expression for $y_{\text{bdy}}$, which is the half-height of the frustum at any $z_{\text{cam}}$
+                    inside the volume. At this $z$-coordinate, the perspective projection will linearly transform
+                    $y_{\text{cam}} \in [-y_{\text{bdy}},y_{\text{bdy}}]$ to $y_{\text{NDC}} \in [-1,1]$, and hence
+                    $$\begin{aligned}
+                        y_{\text{NDC}} &= \frac{y_{\text{cam}}}{y_{\text{bdy}}} \\
+                        &= \> y_{\text{cam}} \cdot \frac{F_y}{-z_{\text{cam}}}.
+                    \end{aligned}$$
+                    We can apply the exact same logic to derive an expression for $x_{\text{NDC}}$, using a modified factor
+                    $$F_x \> = \> \frac{F_y}{A},$$
+                    where dividing by the aspect ratio accounts for the different width of the frustum along the x-axis, and so
+                    $$x_{\text{NDC}} \> = \> x_{\text{cam}} \cdot \frac{F_y}{A \cdot -z_{\text{cam}}}.$$
+
+Now we have to convert z_cam in [-z_near, -z_far] range to z_NDC in [-1, +1]. The standard approach is to use a reciprocal function such that z-values closer to the camera in camera space have a much larger portion of the depth buffer (because objects close to the camera will be focused on more by the viewer, and hence an overlapping of objects that should have a slightly different depth would be more problematic here) so we have that
+z_NDC = s / z_cam + c for some s and c
+we know that -z_near maps to -1 and -z_far maps to +1 so substituting these gives
+-1 = s / -z_near + c and 1 = s / -z_far + c
+=> -1 - c = s / -z_near and 1 - c = s / -z_far
+=> s = (-1 - c) * -z_near = (1 - c) * -z_far
+=> z_near + c * z_near = -z_far + c * z_far
+=> c * z_near - c * z_far = - z_far - z_near
+=> c = - (z_far + z_near) / (z_near - z_far)
+and substituting this result gives
+s = (1 - c) * -z_far
+= (1 + (z_far + z_near) / (z_near - z_far)) * -z_far
+= -z_far * (z_near - z_far + z_far + z_near) / (z_near - z_far)
+= - (2 * z_near * z_far) / (z_near - z_far)
+and substituting these back into our formula for z_NDC gives
+z_NDC = s / z_cam + c
+= - (2 * z_near * z_far) / (z_near - z_far) / z_cam - (z_far + z_near) / (z_near - z_far)
+= (- 2 * z_near * z_far - z_cam * (z_far + z_near)) / (z_cam * (z_near - z_far))
+= [(z_far + z_near) / (z_near - z_far) * z_cam + (2 * z_near * z_far) / (z_near - z_far)] / -z_cam
+(and remember x_NDC = x_cam * (f / aspect_ratio) / -z; y_NDC = y_cam * f / -z)
+
+Notice that we have a common divisor of -z in the formula for x_NDC, y_NDC and z_NDC; and these formulas define a non-linear transformation from camera space to NDC/viewport space. This is where "clip space", a precursor to NDC/viewport space, comes into play. As previously defined, NDC are computed from clip space coordinates using the perspective divide operation (which OpenGL performs very efficiently for us):
+x_NDC = x_clip / w_clip
+y_NDC = y_clip / w_clip
+z_NDC = z_clip / w_clip
+
+If we define w_clip = -z, then the NDC equations we derived give us
+x_clip = x_cam * (f / aspect_ratio)
+y_clip = y_cam * f
+z_clip = [(z_far + z_near) / (z_near - z_far)] * z_cam + [(2 * z_near * z_far) / (z_near - z_far)]
+all of which are linear equations of the camera coordinates.
+
+Therefore, we can define the perspective projection transformation from camera space to clip space as multiplication by the matrix
+f/aspect_ratio  0  0  0
+0  f  0  0
+0  0  (z_far + z_near)/(z_near - z_far)  (2 * z_near * z_far)/(z_near - z_far)
+0  0  -1  0
+and then OpenGL performs the perspective divide to determine viewport/NDC coordinates for us.
                 </p>
 
                 <h3>PyOpenGL Implementation</h3>
@@ -359,7 +463,7 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                 <p>TODO</p>
                 https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview
                 https://learnopengl.com/Getting-started/OpenGL
-                https://www.songho.ca/opengl/gl_projectionmatrix.html
+                https://unspecified.wordpress.com/2012/06/21/calculating-the-gluperspective-matrix-and-other-opengl-matrix-maths/
             </section>
 
             <!-- Footer -->
