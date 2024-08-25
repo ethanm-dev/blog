@@ -415,46 +415,99 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     $$F_x \> = \> \frac{F_y}{A},$$
                     where dividing by the aspect ratio accounts for the different width of the frustum along the x-axis, and so
                     $$x_{\text{NDC}} \> = \> x_{\text{cam}} \cdot \frac{F_y}{A \cdot -z_{\text{cam}}}.$$
-
-Now we have to convert z_cam in [-z_near, -z_far] range to z_NDC in [-1, +1]. The standard approach is to use a reciprocal function such that z-values closer to the camera in camera space have a much larger portion of the depth buffer (because objects close to the camera will be focused on more by the viewer, and hence an overlapping of objects that should have a slightly different depth would be more problematic here) so we have that
-z_NDC = s / z_cam + c for some s and c
-we know that -z_near maps to -1 and -z_far maps to +1 so substituting these gives
--1 = s / -z_near + c and 1 = s / -z_far + c
-=> -1 - c = s / -z_near and 1 - c = s / -z_far
-=> s = (-1 - c) * -z_near = (1 - c) * -z_far
-=> z_near + c * z_near = -z_far + c * z_far
-=> c * z_near - c * z_far = - z_far - z_near
-=> c = - (z_far + z_near) / (z_near - z_far)
-and substituting this result gives
-s = (1 - c) * -z_far
-= (1 + (z_far + z_near) / (z_near - z_far)) * -z_far
-= -z_far * (z_near - z_far + z_far + z_near) / (z_near - z_far)
-= - (2 * z_near * z_far) / (z_near - z_far)
-and substituting these back into our formula for z_NDC gives
-z_NDC = s / z_cam + c
-= - (2 * z_near * z_far) / (z_near - z_far) / z_cam - (z_far + z_near) / (z_near - z_far)
-= (- 2 * z_near * z_far - z_cam * (z_far + z_near)) / (z_cam * (z_near - z_far))
-= [(z_far + z_near) / (z_near - z_far) * z_cam + (2 * z_near * z_far) / (z_near - z_far)] / -z_cam
-(and remember x_NDC = x_cam * (f / aspect_ratio) / -z; y_NDC = y_cam * f / -z)
-
-Notice that we have a common divisor of -z in the formula for x_NDC, y_NDC and z_NDC; and these formulas define a non-linear transformation from camera space to NDC/viewport space. This is where "clip space", a precursor to NDC/viewport space, comes into play. As previously defined, NDC are computed from clip space coordinates using the perspective divide operation (which OpenGL performs very efficiently for us):
-x_NDC = x_clip / w_clip
-y_NDC = y_clip / w_clip
-z_NDC = z_clip / w_clip
-
-If we define w_clip = -z, then the NDC equations we derived give us
-x_clip = x_cam * (f / aspect_ratio)
-y_clip = y_cam * f
-z_clip = [(z_far + z_near) / (z_near - z_far)] * z_cam + [(2 * z_near * z_far) / (z_near - z_far)]
-all of which are linear equations of the camera coordinates.
-
-Therefore, we can define the perspective projection transformation from camera space to clip space as multiplication by the matrix
-f/aspect_ratio  0  0  0
-0  f  0  0
-0  0  (z_far + z_near)/(z_near - z_far)  (2 * z_near * z_far)/(z_near - z_far)
-0  0  -1  0
-and then OpenGL performs the perspective divide to determine viewport/NDC coordinates for us.
+                    The inclusion of $-z_{\text{cam}}$ on the denominator of this transformation is what causes objects further from
+                    the camera to appear smaller on the screen, which is a defining quality of the perspective projection over the
+                    orthographic projection.
                 </p>
+                <p>
+                    Now it is left to transform $z_{\text{cam}}$ \in $[-Z_{\text{far}}, -Z_{\text{near}}]$ to
+                    $z_{\text{NDC}}$ \in $[-1, 1]$. The standard approach is to use a reciprocal function such that objects further
+                    from the camera appear smaller in depth, and it also ensures that $z$-coordinates closer to the camera consume a
+                    disproportionately large part of the depth buffer (because objects close to the camera will be focused on more by
+                    the viewer, and hence numerical imprecision causing objects that should have slightly different $z$-coordinates to
+                    instead overlap would be more problematic if seen up close). Therefore, we establish that
+                    $$z_{\text{NDC}} \> = \> \frac{\alpha}{z_{\text{cam}}} + \beta$$
+                    for some constants $\alpha$ and $\beta$. We know that $z_{\text{cam}} = -Z_{\text{near}}$ is transformed to the
+                    close face of the cube $z_{\text{NDC}} = -1$, and substituting this gives
+                    $$\begin{aligned}
+                        -1 \> &= \frac{\alpha}{-Z_{\text{near}}} + \beta \\
+                        \Rightarrow \> -1 - \beta \> &= \frac{\alpha}{-Z_{\text{near}}} \\
+                        \Rightarrow \> \alpha \> &= (-1 - \beta) \cdot -Z_{\text{near}}.
+                    \end{aligned}$$
+                    Similarly, we know that $z_{\text{cam}} = -Z_{\text{far}}$ is transformed to the far face of the cube
+                    $z_{\text{NDC}} = 1$, and so
+                    $$\begin{aligned}
+                        1 \> &= \frac{\alpha}{-Z_{\text{far}}} + \beta \\
+                        \Rightarrow \> 1 - \beta \> &= \frac{\alpha}{-Z_{\text{far}}} \\
+                        \Rightarrow \> \alpha \> &= (1 - \beta) \cdot -Z_{\text{far}}.
+                    \end{aligned}$$
+                    Equating these two expressions for $\alpha$ gives
+                    $$\begin{aligned}
+                        (-1 - \beta) \cdot -Z_{\text{near}} \> &= \> (1 - \beta) \cdot -Z_{\text{far}} \\
+                        \Rightarrow \> Z_{\text{near}} + \beta Z_{\text{near}} \> &= \> -Z_{\text{far}} + \beta Z_{\text{far}} \\
+                        \Rightarrow \> \beta Z_{\text{near}} - \beta Z_{\text{far}} \> &= \> -Z_{\text{far}} - Z_{\text{near}} \\
+                        \Rightarrow \> \beta \> &= \> -\frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}},
+                    \end{aligned}$$
+                    which is the constant value of $\beta$. Substituting this back into the second expression for $\alpha$ gives
+                    $$\begin{aligned}
+                        \alpha \> &= \> (1 - \beta) \cdot -Z_{\text{far}} \\
+                        &= \> (1 + \frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}}) \cdot -Z_{\text{far}} \\
+                        &= \> -Z_{\text{far}} \frac{Z_{\text{near}} - Z_{\text{far}} + Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}} \\
+                        &= \> -\frac{2 Z_{\text{near}} Z_{\text{far}}}{Z_{\text{near}} - Z_{\text{far}}}.
+                    \end{aligned}$$
+                    Finally, substituting these constants back into our formula for $z_{\text{NDC}}$ gives
+                    $$\begin{aligned}
+                        z_{\text{NDC}} \> &= \> \frac{\alpha}{z_{\text{cam}}} + \beta \\
+                        &= \> - \frac{2 Z_{\text{near}} Z_{\text{far}}}{z_{\text{cam}}(Z_{\text{near}} - Z_{\text{far}})}
+                            - \frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}} \\
+                        &= \> \frac{-2 Z_{\text{near}} Z_{\text{far}} - z_{\text{cam}}(Z_{\text{far}} + Z_{\text{near}})}
+                            {z_{\text{cam}}(Z_{\text{near}} - Z_{\text{far}})} \\
+                        &= \> \frac{1}{-z_{\text{cam}}} \left(
+                            \frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}} z_{\text{cam}}
+                            + \frac{2 Z_{\text{near}} Z_{\text{far}}}{Z_{\text{near}} - Z_{\text{far}}}
+                            \right).
+                    \end{aligned}$$
+                </p>
+                <p>
+                    We have now derived equations for $x_{\text{NDC}}$, $y_{\text{NDC}}$ and $z_{\text{NDC}}$ in terms of
+                    $x_{\text{cam}}$, $y_{\text{cam}}$ and $z_{\text{cam}}$, but notice that these form a non-linear transformation
+                    from camera space to NDC/viewport space due to the common divisor of $-z_{\text{cam}}$ in the formulae. This is
+                    where the purpose of the intermediate "clip space" becomes evident. As previously defined, NDC are computed from
+                    clip space coordinates using the perspective divide operation (which OpenGL performs very efficiently for us):
+                    $$
+                        x_{\text{NDC}} = \frac{x_{\text{clip}}}{w_{\text{clip}}}, \>
+                        y_{\text{NDC}} = \frac{y_{\text{clip}}}{w_{\text{clip}}}, \>
+                        z_{\text{NDC}} = \frac{z_{\text{clip}}}{w_{\text{clip}}}.
+                    $$
+                    If we define $w_{\text{clip}} = -z_{\text{cam}}$, then the NDC equations we derived give us
+                    $$\begin{aligned}
+                        x_{\text{clip}} \> &= \> \frac{F_y}{A} \cdot x_{\text{cam}}, \\
+                        y_{\text{clip}} \> &= \> F_y \cdot y_{\text{cam}}, \\
+                        z_{\text{clip}} \> &= \> \frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}} \cdot
+                        z_{\text{cam}} + \frac{2 Z_{\text{near}} Z_{\text{far}}}{Z_{\text{near}} - Z_{\text{far}}},
+                    \end{aligned}$$
+                    all of which are linear equations of the camera coordinates. Therefore, we can define the perspective projection
+                    transformation from camera space to clip space as multiplication by the matrix
+                    $$
+                    \begin{pmatrix}
+                        \frac{F_y}{A} & 0 & 0 & 0 \\
+                        0 & F_y & 0 & 0 \\
+                        0 & 0 & \frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}} &
+                        \frac{2 Z_{\text{near}} Z_{\text{far}}}{Z_{\text{near}} - Z_{\text{far}}} \\
+                        0 & 0 & -1 & 0
+                    \end{pmatrix}.
+                    Finally, we can implement a simple Python function that returns this matrix given the field of view, aspect ratio,
+                    and the near and far clipping planes.
+                </p>
+                <pre>
+                    <code class="language-python">def projection_matrix(t_x: float, t_y: float, t_z: float) -> npt.NDArray:
+    return np.array([
+        [1.0, 0.0, 0.0, t_x],
+        [0.0, 1.0, 0.0, t_y],
+        [0.0, 0.0, 1.0, t_z],
+        [0.0, 0.0, 0.0, 1.0]
+    ])</code>
+                </pre>
 
                 <h3>PyOpenGL Implementation</h3>
                 <p>TODO</p>
