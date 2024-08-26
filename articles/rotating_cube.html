@@ -183,10 +183,41 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                 </pre>
                 <br>
                 <p>
-                    A rotation in 3D space is defined by a (unit vector) axis and an angle of rotation about that axis.
+                    A rotation in 3D space is defined by a (unit vector) axis and an angle of rotation about that axis. Any rotation
+                    in three dimensions can be achieved by a composition of rotations about the standard basis vectors
+                    $$
+                        \boldsymbol{i} = \begin{pmatrix} 1 \\ 0 \\ 0 \end{pmatrix}, \>\>
+                        \boldsymbol{j} = \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix}, \>\>
+                        \boldsymbol{k} = \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}.
+                    $$
+                    Let's focus on a rotation about the $z$-axis / basis vector $\boldsymbol{k}$ by some acute angle $\theta$, and
+                    consider how the other two basis vectors $\boldsymbol{i}$ and $\boldsymbol{j}$ are transformed to vectors
+                    $\boldsymbol{i}^{\prime}$ and $\boldsymbol{j}^{\prime}$ respectively.
+                </p>
+                <p>TODO: DIAGRAM LIKE https://austinmorlan.com/posts/rotation_matrices/media/2d_basis_rotated_triangles.png</p>
+                <p>
+                    We can form a right-angled triangle in the first quadrant of the $xy$-plane with $\boldsymbol{i}^{\prime}$ as
+                    the hypotenuse, its $x$-component the adjacent side and its $y$-component the opposite side. The hypotenuse has
+                    unit length because a rotation preserves the length of a vector, and the angle at the origin is $\theta$, and
+                    hence we the definitions of sine and cosine give
+                    $$
+                        \cos(\theta) = \frac{\text{adj}}{\text{hyp}} = \frac{i^{\prime}_x}{1}, \>\>
+                        \sin(\theta) = \frac{\text{opp}}{\text{hyp}} = \frac{i^{\prime}_y}{1},
+                    $$
+                    and of course $i^{\prime}_z = 0$ because $i_z = 0$. Forming a similar right-angled triangle between
+                    $\boldsymbol{j}^{\prime}$ and its components (noting that $j^{\prime}_x < 0$), we find that
+                    $$
+                        \cos(\theta) = \frac{j^{\prime}_y}{1}, \>\>
+                        \sin(\theta) = \frac{-j^{\prime}_x}{1},
+                    $$
+                    and $j^{\prime}_z = 0$.
+                    TODO: explain how this generalises to > acute theta
+                    TODO: explain application of these basis rotations to general vector about $z$-axis then
+                    assemble matrix
+                    TODO: generalise to rotations about $x$ and $y$ axes
+                    TODO: remove combined matrix from function (and later calls of this function)
+
                     A rotation about the $x$-axis by angle $\theta$ is represented by:
-                    TODO: derive one of the below matrices and remove the combined one from the function
-                    https://austinmorlan.com/posts/rotation_matrices/
                     $$\begin{pmatrix}
                         1 & 0 & 0 & 0 \\
                         0 & \cos \theta & -\sin \theta & 0 \\
@@ -532,6 +563,7 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                 <p>TODO</p>
                 https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview
                 https://learnopengl.com/Getting-started/OpenGL
+                https://austinmorlan.com/posts/rotation_matrices/
                 https://unspecified.wordpress.com/2012/06/21/calculating-the-gluperspective-matrix-and-other-opengl-matrix-maths/
             </section>
 
