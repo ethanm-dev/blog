@@ -210,55 +210,57 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                         \cos(\theta) = \frac{j^{\prime}_y}{1}, \>\>
                         \sin(\theta) = \frac{-j^{\prime}_x}{1},
                     $$
-                    and $j^{\prime}_z = 0$.
-                    TODO: explain how this generalises to > acute theta
-                    TODO: explain application of these basis rotations to general vector about $z$-axis then
-                    assemble matrix
-                    TODO: generalise to rotations about $x$ and $y$ axes
-                    TODO: remove combined matrix from function (and later calls of this function)
-
-                    A rotation about the $x$-axis by angle $\theta$ is represented by:
-                    $$\begin{pmatrix}
-                        1 & 0 & 0 & 0 \\
-                        0 & \cos \theta & -\sin \theta & 0 \\
-                        0 & \sin \theta & \cos \theta & 0 \\
-                        0 & 0 & 0 & 1
-                    \end{pmatrix},$$
-                    a rotation about the $y$-axis by angle $\theta$ is represented by:
-                    $$\begin{pmatrix}
-                        \cos \theta & 0 & \sin \theta & 0 \\
-                        0 & 1 & 0 & 0 \\
-                        -\sin \theta & 0 & \cos \theta & 0 \\
-                        0 & 0 & 0 & 1
-                    \end{pmatrix},$$
-                    and a rotation about the $z$-axis by angle $\theta$ is represented by:
+                    and $j^{\prime}_z = 0$. Therefore we have that the acute rotation transforms the standard basis vectors to
+                    $$
+                        \boldsymbol{i}^{\prime} = \begin{pmatrix} \cos(\theta) \\ \sin(\theta) \\ 0 \end{pmatrix}, \>\>
+                        \boldsymbol{j}^{\prime} = \begin{pmatrix} -\sin(\theta) \\ \cos(\theta) \\ 0 \end{pmatrix}, \>\>
+                        \boldsymbol{k}^{\prime} = \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}.
+                    $$
+                    It can be shown that these results generalise to a rotation by any angle $\theta$. For an obtuse $\theta$, we
+                    can draw the above triangles for the acute angle $180^{\deg}-\theta$ between the rotated basis vector and the
+                    $x$ and $y$ axes, then using the fact that $\cos(180^{\deg}-\theta) = -\cos(\theta)$ and
+                    $\sin(180^{\deg}-\theta) = \sin(\theta)$, we will arrive at the same transformed basis vectors. A similar approach
+                    can be used for reflex angles $\theta$, then utilising the fact that angles that are equal modulo $360^{\deg}$
+                    produce equivalent rotations, we can claim that the above results apply to any angle $\theta$.
+                </p>
+                <p>
+                    For a general vector $\boldsymbol{v}$, the definition of the standard basis vectors gives us that
+                    $$
+                        \boldsymbol{v} \> = \> \begin{pmatrix} v_x \\ v_y \\ v_y \end{pmatrix}
+                        \> = \> v_x \boldsymbol{i} + v_y \boldsymbol{j} + v_z \boldsymbol{k}
+                    $$
+                    (i.e. $\boldsymbol{v}$ is a linear combination of the standard basis vectors, with coefficients equal to its
+                    entries), and hence the rotation of $\boldsymbol{v}$ about the $z$-axis by angle $\theta$ is
+                    $$
+                    \boldsymbol{v}^{\prime} \> = \> v_x \boldsymbol{i}^{\prime} + v_y \boldsymbol{j}^{\prime} + v_z \boldsymbol{k}^{\prime}
+                    \> = \> \begin{pmatrix} \cos(\theta)v_x - \sin(\theta)v_y \\ \sin(\theta)v_x + \cos(\theta)v_y \\ v_z \end{pmatrix}
+                    $$
+                    because affine transformations (of which a rotation is an example) preserve linear combinations of vectors.
+                    Finally, returning to 3D homogeneous coordinates, we can equate this transformation to multiplication by the
+                    matrix
                     $$\begin{pmatrix}
                         \cos \theta & -\sin \theta & 0 & 0 \\
                         \sin \theta & \cos \theta & 0 & 0 \\
                         0 & 0 & 1 & 0 \\
                         0 & 0 & 0 & 1
                     \end{pmatrix}.$$
-                    As an example, take the point $(x,y,z) = (1,1,0)$ and apply a rotation about the $z$-axis by 180
-                    degrees (or $\pi$ radians):
-                    $$
-                    \begin{pmatrix}
-                        \cos \pi & -\sin \pi & 0 & 0 \\
-                        \sin \pi & \cos \pi & 0 & 0 \\
-                        0 & 0 & 1 & 0 \\
+                    An equivalent derivation can be performed for a rotation about the $x$-axis by an angle $\theta$ to find that its
+                    matrix is
+                    $$\begin{pmatrix}
+                        1 & 0 & 0 & 0 \\
+                        0 & \cos \theta & -\sin \theta & 0 \\
+                        0 & \sin \theta & \cos \theta & 0 \\
                         0 & 0 & 0 & 1
-                    \end{pmatrix}
-                    \begin{pmatrix} 1 \\ 1 \\ 0 \\ 1 \end{pmatrix} \> = \>
-                    \begin{pmatrix}
-                        -1 & 0 & 0 & 0 \\
-                        0 & -1 & 0 & 0 \\
-                        0 & 0 & 1 & 0 \\
+                    \end{pmatrix},$$
+                    and similarly, a rotation about the $y$-axis by $\theta$ is represented by the matrix
+                    $$\begin{pmatrix}
+                        \cos \theta & 0 & \sin \theta & 0 \\
+                        0 & 1 & 0 & 0 \\
+                        -\sin \theta & 0 & \cos \theta & 0 \\
                         0 & 0 & 0 & 1
-                    \end{pmatrix}
-                    \begin{pmatrix} 1 \\ 1 \\ 0 \\ 1 \end{pmatrix} \> = \>
-                    \begin{pmatrix} -1 \\ -1 \\ 0 \\ 1 \end{pmatrix}
-                    $$
-                    which is the expected result. A rotation about an arbitrary unit vector axis $(r_X,r_Y,r_Z)$ by angle
-                    $\theta$ is represented by the matrix
+                    \end{pmatrix}.$$
+                    We won't derive this nor use it in our implementation, but for the sake of completeness, a rotation about an
+                    arbitrary unit vector axis $(r_X,r_Y,r_Z)$ by an angle $\theta$ is represented by the matrix
                     $$
                     \begin{pmatrix}
                         \cos \theta + r_X^2 (1 - \cos \theta) & r_X r_Y (1 - \cos \theta) - r_Z \sin \theta & r_X r_Z (1 - \cos \theta) + r_Y \sin \theta & 0 \\
@@ -267,62 +269,68 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                         0 & 0 & 0 & 1
                     \end{pmatrix},
                     $$
-                    which could also be achieved by a product of the three basis vector rotations (but such an approach can
-                    lead to numerical instability, so this direct rotation should be preferred). We can write a flexible
-                    Python function which will allow us to use either approach, saving some unnecessary computation if we
-                    wish to rotate about a basis vector.
+                    which, as mentioned already, can also be achieved by a product of the three basis vector rotations (but this
+                    approach can sometimes lead to numerical instability, so many advanced programs using vector rotations prefer
+                    to use a direct rotation like this). Given angles of rotation about the $x$, $y$ and $z$ axes, we can write a
+                    Python function which returns the resulting rotation matrix product.
                 </p>
                 <pre>
                     <code class="language-python">def rotation_matrix(
-    r_x: float,
-    r_y: float,
-    r_z: float,
-    theta_deg: float = 0.0,
-    theta_rad: float = 0.0
+    theta_x_deg: float = 0.0,
+    theta_x_rad: float = 0.0,
+    theta_y_deg: float = 0.0,
+    theta_y_rad: float = 0.0,
+    theta_z_deg: float = 0.0,
+    theta_z_rad: float = 0.0
 ) -> npt.NDArray:
-    # convert input to radians
-    assert (theta_deg == 0.0) != (theta_rad == 0.0), "Exactly one theta input must be provided"
-    if theta_rad == 0.0:
-        theta_rad = theta_deg * np.pi / 180.0
+    # convert inputs to radians
+    assert (theta_x_deg == 0.0) or (theta_x_rad == 0.0), "Either provide theta_x in degrees or radians, not both"
+    if theta_x_deg != 0.0:
+        theta_x_rad = theta_x_deg * np.pi / 180.0
 
-    # ensure rotation axis is normalised
-    axis_norm = np.sqrt(r_x**2 + r_y**2 + r_z**2)
-    r_x /= axis_norm
-    r_y /= axis_norm
-    r_z /= axis_norm
+    assert (theta_y_deg == 0.0) or (theta_y_rad == 0.0), "Either provide theta_y in degrees or radians, not both"
+    if theta_y_deg != 0.0:
+        theta_y_rad = theta_y_deg * np.pi / 180.0
+
+    assert (theta_z_deg == 0.0) or (theta_z_rad == 0.0), "Either provide theta_z in degrees or radians, not both"
+    if theta_z_deg != 0.0:
+        theta_z_rad = theta_z_deg * np.pi / 180.0
 
     # pre-compute sin and cos of theta
     sin = np.sin(theta_rad)
     cos = np.cos(theta_rad)
 
-    if r_x == 1.0 and r_y == 0.0 and r_z == 0.0:
-        return np.array([
+    # init identity matrix to handle no rotation
+    rot_matrix = np.array([
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0]
+    ])
+
+    if theta_x_rad != 0.0:
+        rot_matrix @= np.array([
             [1.0, 0.0, 0.0, 0.0],
             [0.0, cos, -sin, 0.0],
             [0.0, sin, cos, 0.0],
             [0.0, 0.0, 0.0, 1.0]
         ])
-    elif r_x == 0.0 and r_y == 1.0 and r_z == 0.0:
-        return np.array([
+    if theta_y_rad != 0.0:
+        rot_matrix @= np.array([
             [cos, 0.0, sin, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [-sin, 0.0, cos, 0.0],
             [0.0, 0.0, 0.0, 1.0]
         ])
-    elif r_x == 0.0 and r_y == 1.0 and r_z == 0.0:
-        return np.array([
+    if theta_z_rad != 0.0:
+        rot_matrix @= np.array([
             [cos, -sin, 0.0, 0.0],
             [sin, cos, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, 0.0, 1.0]
         ])
-    else:
-        return np.array([
-            [cos + r_x**2 * (1 - cos), r_x * r_y * (1 - cos) - r_z * sin, r_x * r_z * (1 - cos) + r_y * sin, 0.0],
-            [r_y * r_x * (1 - cos) + r_z * sin, cos + r_y**2 * (1 - cos), r_y * r_z * (1 - cos) - r_x * sin, 0.0],
-            [r_z * r_x * (1 - cos) - r_y * sin, r_z * r_y * (1 - cos) + r_x * sin, cos + r_z**2 * (1 - cos), 0.0],
-            [0.0,  0.0, 0.0, 1.0]
-        ])</code>
+
+    return rot_matrix</code>
                 </pre>
                 <br>
 
@@ -338,18 +346,23 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
     scale_x: float = 1.0,
     scale_y: float = 1.0,
     scale_z: float = 1.0,
-    rot_axis_x: float = 0.0,
-    rot_axis_y: float = 0.0,
-    rot_axis_z: float = 1.0,
-    rot_theta_deg: float = 0.0,
-    rot_theta_rad: float = 0.0,
+    rot_x_deg: float = 0.0,
+    rot_x_rad: float = 0.0,
+    rot_y_deg: float = 0.0,
+    rot_y_rad: float = 0.0,
+    rot_z_deg: float = 0.0,
+    rot_z_rad: float = 0.0,
     trans_x: float = 0.0,
     trans_y: float = 0.0,
     trans_z: float = 0.0
 ) -> npt.NDArray:
     model = scale_matrix(scale_x, scale_y, scale_z)
-    if rot_theta_deg != 0.0 or rot_theta_rad != 0.0:
-        model @= rotation_matrix(rot_axis_x, rot_axis_y, rot_axis_z, rot_theta_deg, rot_theta_rad)
+    if (
+        rot_x_deg != 0.0 or rot_x_rad != 0.0 or
+        rot_y_deg != 0.0 or rot_y_rad != 0.0 or
+        rot_z_deg != 0.0 or rot_z_rad != 0.0
+    ):
+        model @= rotation_matrix(rot_x_deg, rot_x_rad, rot_y_deg, rot_y_rad, rot_z_deg, rot_z_rad)
     if trans_x != 0.0 or trans_y != 0.0 or trans_z != 0.0:
         model @= translation_matrix(trans_x, trans_y, trans_z)
     return model</code></pre>
@@ -367,16 +380,21 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
     camera_x: float = 0.0,
     camera_y: float = 0.0,
     camera_z: float = 0.0,
-    rot_axis_x: float = 0.0,
-    rot_axis_y: float = 0.0,
-    rot_axis_z: float = 1.0,
-    rot_theta_deg: float = 0.0,
-    rot_theta_rad: float = 0.0
+    rot_x_deg: float = 0.0,
+    rot_x_rad: float = 0.0,
+    rot_y_deg: float = 0.0,
+    rot_y_rad: float = 0.0,
+    rot_z_deg: float = 0.0,
+    rot_z_rad: float = 0.0
 ) -> npt.NDArray:
-    model = translation_matrix(camera_x, camera_y, camera_z)
-    if rot_theta_deg != 0.0 or rot_theta_rad != 0.0:
-        model @= rotation_matrix(rot_axis_x, rot_axis_y, rot_axis_z, rot_theta_deg, rot_theta_rad)
-    return model</code>
+    view = translation_matrix(camera_x, camera_y, camera_z)
+    if (
+        rot_x_deg != 0.0 or rot_x_rad != 0.0 or
+        rot_y_deg != 0.0 or rot_y_rad != 0.0 or
+        rot_z_deg != 0.0 or rot_z_rad != 0.0
+    ):
+        view @= rotation_matrix(rot_x_deg, rot_x_rad, rot_y_deg, rot_y_rad, rot_z_deg, rot_z_rad)
+    return view</code>
                 </pre>
                 <br>
 
