@@ -575,7 +575,38 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                 </pre>
 
                 <h3>PyOpenGL Implementation</h3>
-                <p>TODO</p>
+                <p>
+                    TODO: intro, then shader code
+                </p>
+                <p>
+                    Now that we have defined our shaders, we can implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
+                    object" for it, attaches the source code and compiles it, then returns the shader object's ID. This function also checks for compilation errors,
+                    such that this utility function successfully returning implies that the shader's source code is valid. The arguments to this function are simply
+                    the file path of the shader's source code and the type of shader (either "vertex" or "fragment").
+                </p>
+                <pre>
+                    <code class="language-python">from OpenGL.GL import *
+from pathlib import Path
+
+
+def load_shader(file_name: str, shader_type: str = "vertex") -> int:
+    if not Path(file_name).exists():
+        raise FileNotFoundError(f"{shader_type.capitalize()} shader file not found: {file_name}")
+
+    with open(file_name) as f:
+        shader_src = f.read()
+    
+    shader_id = glCreateShader(GL_VERTEX_SHADER if shader_type == "vertex" else GL_FRAGMENT_SHADER)
+    glShaderSource(shader_id, shader_src)
+    glCompileShader(shader_id)
+
+    # ensure that the shader compiled successfully
+    success = glGetShaderiv(shader_id, GL_COMPILE_STATUS)
+    if not success:
+        raise RuntimeError(f"Failed to compile {shader_type} shader: {glGetShaderInfoLog(shader_id).decode()}")
+
+    return shader_id</code>
+                </pre>
 
                 <h3>References</h3>
                 <p>TODO</p>
