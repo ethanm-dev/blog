@@ -618,32 +618,7 @@ def init_glfw_window(title: str, screen_width: int = 800, screen_height: int = 6
                     TODO: shader code in separate files
                 </p>
                 <p>
-                    Now that we have dOpenGL.GL import *
-
-
-                    def framebuffer_size_callback(window: glfw._GLFWwindow, width: int, height: int) -> None:
-                        glViewport(0, 0, width, height)
-                    
-                    
-                    def init_glfw_window(title: str, screen_width: int = 800, screen_height: int = 600) -> glfw._GLFWwindow:
-                        # init GLFW
-                        if not glfw.init():
-                            raise RuntimeError("Failed to initialise GLFW")
-                    
-                        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
-                        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
-                        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-                    
-                        # create window
-                        window = glfw.create_window(screen_width, screen_height, title, None, None)
-                        if not window:
-                            glfw.terminate()
-                            raise RuntimeError("Failed to create GLFW window")
-                    
-                        glfw.make_context_current(window)
-                        glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
-                    
-                        return efined our shaders, we can implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
+                    Now that we have defined our shaders, we can implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
                     object" for it, attaches the source code and compiles it, then returns the shader object's ID. This function also checks for compilation errors,
                     such that this utility function successfully returning implies that the shader's source code is valid. The arguments to this function are simply
                     the file path of the shader's source code and the type of shader (either "vertex" or "fragment").
@@ -696,6 +671,52 @@ def create_shader_program(vertex_shader_id: int, fragment_shader_id: int) -> int
 
     return program_id</code>
                 </pre>
+                <p>
+                    TODO: vertex_array_buffer_objs_for_unit_cube
+                </p>
+                <p>
+                    TODO: load_texture
+                </p>
+                <p>
+                    TODO: shader_program_set_sampler_texture_units & bind_textures_to_texture_units
+                </p>
+                <p>
+                    TODO: send_model_view_projection_matrices_to_shader (consider util to handle just 1 matrix)
+                </p>
+                <p>
+                    In this tutorial we will handle only a single user input: the escape key. To do this, we define a `process_input` function which is called at
+                    the beginning of the main loop. We use pyGLFW's `get_key` function to check if the escape key is currently being pressed, and if it is, we
+                    set GLFW's `window_should_close` flag to `True`, which will cause the main loop to exit before the next iteration.
+                </p>
+                <pre>
+                    <code class="language-python">import glfw
+
+
+def process_input(window: glfw._GLFWwindow) -> None:
+    if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
+        glfw.set_window_should_close(window, True)</code>
+                </pre>
+                <p>
+                    The final utility function we will implement is one that runs after the main loop has exited, but before the program terminates. this function
+                    is responsible for deleting the vertex array object and vertex buffer object that we created for the unit cube, before terminating the GLFW
+                    library.
+                </p>
+                <pre>
+                    <code class="language-python">import glfw
+from OpenGL.GL import *
+
+
+def terminate(vao_id: int, vbo_id: int):
+    glDeleteVertexArrays(1, (vao_id,))
+    glDeleteBuffers(1, (vbo_id,))
+    glfw.terminate()</code>
+                </pre>
+                <p>
+                    TODO: main program
+                </p>
+                <p>
+                    TODO: screenshot of resulting window
+                </p>
 
                 <h3>References</h3>
                 <p>TODO</p>
