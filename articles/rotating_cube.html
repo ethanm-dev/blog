@@ -576,10 +576,74 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
 
                 <h3>PyOpenGL Implementation</h3>
                 <p>
-                    TODO: intro, then shader code
+                    TODO: intro rotating cube and utility function approach
                 </p>
                 <p>
-                    Now that we have defined our shaders, we can implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
+                    The first utility function we need to define is one that initialises a window for us to render in. We will use
+                    <a href="https://github.com/FlorianRhiem/pyGLFW", target="_blank">pyGLFW</a>, which is a Python binding to
+                    <a href="https://www.glfw.org/", target="_blank">GLFW</a>, an OpenGL utility library that provides a simple API for managing windows and handling
+                    input. This function receives the window's title, width and height (in pixels) as input, initialises GLFW, creates a window (which also creates
+                    its OpenGL context, which is then made current), sets a callback function to handle window resizing, then returns the window object for later use.
+                </p>
+                <pre>
+                    <code class="language-python">import glfw
+from OpenGL.GL import *
+
+
+def framebuffer_size_callback(window: glfw._GLFWwindow, width: int, height: int) -> None:
+    glViewport(0, 0, width, height)
+
+
+def init_glfw_window(title: str, screen_width: int = 800, screen_height: int = 600) -> glfw._GLFWwindow:
+    # init GLFW
+    if not glfw.init():
+        raise RuntimeError("Failed to initialise GLFW")
+
+    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
+    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
+    glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+
+    # create window
+    window = glfw.create_window(screen_width, screen_height, title, None, None)
+    if not window:
+        glfw.terminate()
+        raise RuntimeError("Failed to create GLFW window")
+
+    glfw.make_context_current(window)
+    glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
+
+    return window</code>
+                </pre>
+                <p>
+                    TODO: shader code in separate files
+                </p>
+                <p>
+                    Now that we have dOpenGL.GL import *
+
+
+                    def framebuffer_size_callback(window: glfw._GLFWwindow, width: int, height: int) -> None:
+                        glViewport(0, 0, width, height)
+                    
+                    
+                    def init_glfw_window(title: str, screen_width: int = 800, screen_height: int = 600) -> glfw._GLFWwindow:
+                        # init GLFW
+                        if not glfw.init():
+                            raise RuntimeError("Failed to initialise GLFW")
+                    
+                        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
+                        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
+                        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+                    
+                        # create window
+                        window = glfw.create_window(screen_width, screen_height, title, None, None)
+                        if not window:
+                            glfw.terminate()
+                            raise RuntimeError("Failed to create GLFW window")
+                    
+                        glfw.make_context_current(window)
+                        glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
+                    
+                        return efined our shaders, we can implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
                     object" for it, attaches the source code and compiles it, then returns the shader object's ID. This function also checks for compilation errors,
                     such that this utility function successfully returning implies that the shader's source code is valid. The arguments to this function are simply
                     the file path of the shader's source code and the type of shader (either "vertex" or "fragment").
@@ -600,12 +664,37 @@ def load_shader(file_name: str, shader_type: str = "vertex") -> int:
     glShaderSource(shader_id, shader_src)
     glCompileShader(shader_id)
 
-    # ensure that the shader compiled successfully
     success = glGetShaderiv(shader_id, GL_COMPILE_STATUS)
     if not success:
         raise RuntimeError(f"Failed to compile {shader_type} shader: {glGetShaderInfoLog(shader_id).decode()}")
 
     return shader_id</code>
+                </pre>
+                <p>
+                    After using the above function to initialise a vertex shader and fragment shader, the next step is to create a "shader program", which is an
+                    object comprising compiled shaders that are linked together (where outputs are matched to downstream inputs to check for compatibility). We can
+                    then bind this shader program to the OpenGL context to use it for rendering. This utility function receives a vertex shader ID and fragment shader
+                    ID as input, attaches them to a new shader program, links the program (checking for errors), deletes the individual shader objects, then returns
+                    the new shader program's ID.
+                </p>
+                <pre>
+                    <code class="language-python">from OpenGL.GL import *
+
+
+def create_shader_program(vertex_shader_id: int, fragment_shader_id: int) -> int:
+    program_id = glCreateProgram()
+    glAttachShader(program_id, vertex_shader_id)
+    glAttachShader(program_id, fragment_shader_id)
+    glLinkProgram(program_id)
+
+    success = glGetProgramiv(program_id, GL_LINK_STATUS)
+    if not success:
+        raise RuntimeError(f"Failed to link shader program: {glGetProgramInfoLog(program_id).decode()}")
+
+    glDeleteShader(vertex_shader_id)
+    glDeleteShader(fragment_shader_id)
+
+    return program_id</code>
                 </pre>
 
                 <h3>References</h3>
