@@ -615,8 +615,44 @@ def init_glfw_window(title: str, screen_width: int = 800, screen_height: int = 6
     return window</code>
                 </pre>
                 <p>
-                    TODO: shader code in separate files
+                    Before we continue with PyOpenGL, we need to define our vertex and fragment shaders. We write our shaders in GLSL (the OpenGL Shading Language),
+                    which is very similar to C but notably provides vector and matrix types tailored for graphics programming. The vertex shader is written as
+                    follows:
+                    <ul>
+                        <li>the first line defines the version of GLSL we are using;</li>
+                        <li>
+                            next, we define the attributes of an input vertex that this shader will process (in our case, an input vertex has a position attribute
+                            with three values, as our vertices are three dimensional, and a texture coordinate attribute with two values, because our texture is two
+                            dimensional);
+                        </li>
+                        <li>
+                            then we define TODO: uniforms
+                        </li>
+                        <li>
+                            finally we define the main function of the shader (where we can use our inputs and uniforms), where the first line multiplies the model,
+                            view and projection matrices by the input vertex and assigns this output clip space vector to the pre-defined `gl_Position` variable, and
+                            the second line TODO
+                        </li>
+
+                    </ul>
                 </p>
+                <pre>
+                    <code class="language-glsl">#version 330 core
+layout (location = 0) in vec3 input_pos;
+layout (location = 1) in vec2 input_tex_coord;
+
+out vec2 output_tex_coord;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(input_pos, 1.0f);
+    output_tex_coord = vec2(input_tex_coord.x, input_tex_coord.y);
+}</code>
+                </pre>
                 <p>
                     Now that we have defined our shaders, we can implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
                     object" for it, attaches the source code and compiles it, then returns the shader object's ID. This function also checks for compilation errors,
@@ -675,8 +711,65 @@ def create_shader_program(vertex_shader_id: int, fragment_shader_id: int) -> int
                     TODO: vertex_array_buffer_objs_for_unit_cube
                 </p>
                 <p>
-                    TODO: load_texture
+                    Next up, we need a utility function for loading a texture from an image file. This function receives the file path of the texture image as input and:
+                    <ul>
+                        <li>checks the file path is valid;</li>
+                        <li>creates a texture object and binds it to the OpenGL context, which makes it the currently active 2D texture for manipulation;</li>
+                        <li>
+                            sets the texture wrapping method for the `S` (horizontal) and `T` (vertical) axes to `GL_REPEAT` (so texture coordinates outside the
+                            $[0,1]$ range will be handled by repeating the texture image like a tile);
+                        </li>
+                        <li>
+                            sets the texture filtering method for minifying (scaling down) to `GL_LINEAR_MIPMAP_LINEAR` (a linear interpolation of the two nearest
+                            mipmap levels, with linear interpolation between the four nearest texels in each mipmap level), and for magnifying (scaling up) to
+                            `GL_LINEAR` (a linear interpolation of the four nearest texels);
+                        </li>
+                        <li>
+                            loads the image file using the <a href="https://pillow.readthedocs.io/en/stable/", target="_blank">Python Imaging Library (PIL)</a> and
+                            flips it vertically (as OpenGL expects the origin to be the bottom-left, whilst PIL uses the top-left);
+                        </li>
+                        <li>
+                            sends the image data to the texture object (specifying the currently bound 2D texture, the base mipmap level 0, the intended texture
+                            format as RGB, the image width and height, a legacy border size which must always be 0, the source format as RGB and source data type
+                            as unsigned bytes, and finally the image data itself);
+                        </li>
+                        <li>
+                            generates mipmaps for the texture object (a sequence of 50% downscaled copies of the original image used when the texture is sampled onto
+                            a small or distant surface to prevent wasted processing or aliasing artifacts); and finally
+                        </li>
+                        <li>returns the texture object's ID.</li>
+                    </ul>
                 </p>
+                <pre>
+                    <code class="language-python">from OpenGL.GL import *
+from pathlib import Path
+from PIL import Image
+
+
+def load_texture(file_path: str) -> int:
+    file_path = Path(file_path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"Texture file not found: {file_path}")
+    if file_path.suffix not in [".jpg", ".png"]:
+        raise ValueError(f"Texture file must be a .jpg or .png file: {file_path}")
+
+    texture_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture_id)
+
+    # set texture wrapping and filtering params
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+    img = Image.open(file_path).transpose(Image.FLIP_TOP_BOTTOM)
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width, img.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img.tobytes())
+    glGenerateMipmap(GL_TEXTURE_2D)
+
+    img.close()
+    return texture_id</code>
+                </pre>
                 <p>
                     TODO: shader_program_set_sampler_texture_units & bind_textures_to_texture_units
                 </p>
