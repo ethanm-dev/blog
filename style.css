@@ -259,6 +259,11 @@ ol#references {
     padding-bottom: 5rem;
 }
 
+.article-body img {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
 #home-button {
     display: block;
     position: absolute;
