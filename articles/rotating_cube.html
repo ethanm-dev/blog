@@ -194,7 +194,7 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     consider how the other two basis vectors $\boldsymbol{i}$ and $\boldsymbol{j}$ are transformed to vectors
                     $\boldsymbol{i}^{\prime}$ and $\boldsymbol{j}^{\prime}$ respectively.
                 </p>
-                <img src="../images/rotating_cube_rotation.png" alt="Diagram of 3D standard basis vectors i and j rotated about k.">
+                <img src="../images/rotating_cube_rotation.png" alt="Diagram of 3D standard basis vectors i and j rotated about k." class="padded-img">
                 <p>
                     We can form a right-angled triangle in the first quadrant of the $xy$-plane with $\boldsymbol{i}^{\prime}$ as
                     the hypotenuse, its $x$-component the adjacent side and its $y$-component the opposite side. The hypotenuse has
@@ -284,21 +284,23 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
     theta_z_rad: float = 0.0
 ) -> npt.NDArray:
     # convert inputs to radians
-    assert (theta_x_deg == 0.0) or (theta_x_rad == 0.0), "Either provide theta_x in degrees or radians, not both"
+    assert (theta_x_deg == 0.0) or (theta_x_rad == 0.0), (
+        "Either provide theta_x in degrees or radians, not both"
+    )
     if theta_x_deg != 0.0:
         theta_x_rad = theta_x_deg * np.pi / 180.0
 
-    assert (theta_y_deg == 0.0) or (theta_y_rad == 0.0), "Either provide theta_y in degrees or radians, not both"
+    assert (theta_y_deg == 0.0) or (theta_y_rad == 0.0), (
+        "Either provide theta_y in degrees or radians, not both"
+    )
     if theta_y_deg != 0.0:
         theta_y_rad = theta_y_deg * np.pi / 180.0
 
-    assert (theta_z_deg == 0.0) or (theta_z_rad == 0.0), "Either provide theta_z in degrees or radians, not both"
+    assert (theta_z_deg == 0.0) or (theta_z_rad == 0.0), (
+        "Either provide theta_z in degrees or radians, not both"
+    )
     if theta_z_deg != 0.0:
         theta_z_rad = theta_z_deg * np.pi / 180.0
-
-    # pre-compute sin and cos of theta
-    sin = np.sin(theta_rad)
-    cos = np.cos(theta_rad)
 
     # init identity matrix to handle no rotation
     rot_matrix = np.array([
@@ -309,6 +311,8 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
     ])
 
     if theta_x_rad != 0.0:
+        sin = np.sin(theta_x_rad)
+        cos = np.cos(theta_x_rad)
         rot_matrix @= np.array([
             [1.0, 0.0, 0.0, 0.0],
             [0.0, cos, -sin, 0.0],
@@ -316,6 +320,8 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
             [0.0, 0.0, 0.0, 1.0]
         ])
     if theta_y_rad != 0.0:
+        sin = np.sin(theta_y_rad)
+        cos = np.cos(theta_y_rad)
         rot_matrix @= np.array([
             [cos, 0.0, sin, 0.0],
             [0.0, 1.0, 0.0, 0.0],
@@ -323,6 +329,8 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
             [0.0, 0.0, 0.0, 1.0]
         ])
     if theta_z_rad != 0.0:
+        sin = np.sin(theta_z_rad)
+        cos = np.cos(theta_z_rad)
         rot_matrix @= np.array([
             [cos, -sin, 0.0, 0.0],
             [sin, cos, 0.0, 0.0],
@@ -583,8 +591,11 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     The first utility function we need to define is one that initialises a window for us to render in. We will use
                     <a href="https://github.com/FlorianRhiem/pyGLFW", target="_blank">pyGLFW</a>, which is a Python binding to
                     <a href="https://www.glfw.org/", target="_blank">GLFW</a>, an OpenGL utility library that provides a simple API for managing windows and handling
-                    input. This function receives the window's title, width and height (in pixels) as input, initialises GLFW, creates a window (which also creates
-                    its OpenGL context, which is then made current), sets a callback function to handle window resizing, then returns the window object for later use.
+                    input. This function receives the window's title, width and height (in pixels) as input, and starts by initialising GLFW, which involves setting
+                    the OpenGL version and profile (the core profile is the most modern and doesn't include deprecated features). It then creates a window (which also
+                    creates its OpenGL context, which is then made current) and sets a callback function to handle window resizing. Finally, OpenGL is configured,
+                    which in our case only involves enabling depth testing (which will ensure that closer objects are rendered in front of objects further from the
+                    camera). This function returns the window object for later use.
                 </p>
                 <pre>
                     <code class="language-python">import glfw
@@ -595,7 +606,7 @@ def framebuffer_size_callback(window: glfw._GLFWwindow, width: int, height: int)
     glViewport(0, 0, width, height)
 
 
-def init_glfw_window(title: str, screen_width: int = 800, screen_height: int = 600) -> glfw._GLFWwindow:
+def init_glfw_window_opengl(title: str, screen_width: int = 800, screen_height: int = 600) -> glfw._GLFWwindow:
     # init GLFW
     if not glfw.init():
         raise RuntimeError("Failed to initialise GLFW")
@@ -612,6 +623,9 @@ def init_glfw_window(title: str, screen_width: int = 800, screen_height: int = 6
 
     glfw.make_context_current(window)
     glfw.set_framebuffer_size_callback(window, framebuffer_size_callback)
+
+    # init OpenGL options
+    glEnable(GL_DEPTH_TEST)
 
     return window</code>
                 </pre>
@@ -774,7 +788,8 @@ def create_shader_program(vertex_shader_id: int, fragment_shader_id: int) -> int
                         <li>the final argument is an offset from the start of each vertex's data to the start of this attribute's data.</li>
                     </ul>
                     Following each call to this function, we call `glEnableVertexAttribArray` to enable the attribute (all vertex attributes are disabled by default).
-                    Finally, our utility function returns the VAO and VBO IDs and the number of vertices comprising the cube.
+                    Finally, our utility function returns the VAO and VBO IDs and the number of vertices comprising the cube. Note that we only need the VBO ID for
+                    deleting this object when the program terminates, as the VAO maintains an internal reference to the VBO which we will use when rendering.
                 </p>
                 <pre>
                     <code class="language-python">from OpenGL.GL import *
@@ -973,6 +988,39 @@ def process_input(window: glfw._GLFWwindow) -> None:
         glfw.set_window_should_close(window, True)</code>
                 </pre>
                 <p>
+                    This next utility function clears the screen with a background colour and activates our shader program, and should be called immediately after
+                    the above `process_input` function. It receives the shader program ID and the background colour as input, calls `glClearColor` to set the
+                    background colour, which is then used when `glClear` is called. We tell OpenGL to clear both the colour and depth buffers (such that any trace
+                    of the previous frame is removed), Finally, we activate our shader program, as following this function, the main program will be setting
+                    uniforms and drawing geometry.
+                </p>
+                <pre>
+                    <code class="language-python">from OpenGL.GL import *
+
+
+def clear_screen_before_render(
+    program_id: int, background_colour: tuple[float, float, float, float]
+):
+    glClearColor(*background_colour)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glUseProgram(program_id)</code>
+                </pre>
+                <p>
+                    We have already defined functions to set uniforms for matrices and texture units, so it remains to implement a function that actually renders
+                    the unit cube. This function takes the VAO ID and the number of vertices as input, and starts by binding the VAO to the current OpenGL context.
+                    We then call `glDrawArrays` which, using the currently active shader program, the previously configured vertex attributes and the vertex data
+                    in the VBO (which was indirectly bound by binding the VAO), draws the cube's triangles to the screen. We simply pass the primitive type
+                    `GL_TRIANGLES`, the initial vertex index (0) and the number of vertices to draw.
+                </p>
+                <pre>
+                    <code class="language-python">from OpenGL.GL import *
+
+
+def render_triangles(vao_id: int, num_vertices: int):
+    glBindVertexArray(vao_id)
+    glDrawArrays(GL_TRIANGLES, 0, num_vertices)</code>
+                </pre>
+                <p>
                     The final utility function we will implement is one that runs after the main loop has exited, but before the program terminates. this function
                     is responsible for deleting the vertex array object and vertex buffer object that we created for the unit cube, before terminating the GLFW
                     library.
@@ -988,8 +1036,79 @@ def terminate(vao_id: int, vbo_id: int):
     glfw.terminate()</code>
                 </pre>
                 <p>
-                    TODO: main program
+                    Finally, we can put all of these utility functions to use in our main program, which will render a rotating, textured cube. This main program
+                    has two main sections: the first of these is the initialisation section, where we set up the window, shader program, vertex array and buffer
+                    objects (as well as our vertex attribute configuration), and our texture with its texture unit. The other section is the main rendering loop,
+                    where we process user input, clear the screen, bind the texture to its texture unit, define the model, view and projection matrices, send these
+                    to the GPU via their respective uniforms, and finally render the cube.
                 </p>
+                <p>
+                    Following the rendering, we call GLFW's `swap_buffers` function. To understand what this does, we first need to understand that OpenGL uses
+                    "double buffering": the front colour buffer (a large 2D buffer storing the colour of each pixel in the window) contains the image currently
+                    being displayed, whilst our rendering commands write to the back buffer. After we are finished rendering, calling `swap_buffers` swaps the back
+                    buffer to the front buffer which displays the new image in an instant. If OpenGL used a single buffer for rendering, the user might see
+                    intermediate rendering steps, flickering or artifacts on the screen. We also call `poll_events` which checks for input events (keyboard or mouse),
+                    which we then handle at the beginning of the next iteration of the main loop. This loop is terminated when GLFW's `window_should_close` function
+                    returns True, which we set in the `process_input` function when the escape key is pressed. Finally, we call our `terminate` utility function to
+                    clean up some of our OpenGL objects before actually terminating the program.
+                </p>
+                <pre>
+                    <code class="language-python">import glfw
+from utils import *
+
+
+SCREEN_TITLE = "Rotating Cube"
+SCREEN_WIDTH_PX = 800
+SCREEN_HEIGHT_PX = 600
+
+
+window = init_glfw_window_opengl(title=SCREEN_TITLE, screen_width=SCREEN_WIDTH_PX, screen_height=SCREEN_HEIGHT_PX)
+
+vertex_shader_id = load_shader(file_name="vertex_shader.vs", shader_type="vertex")
+fragment_shader_id = load_shader(file_name="fragment_shader.fs", shader_type="fragment")
+shader_program_id = create_shader_program(vertex_shader_id, fragment_shader_id)
+
+vao_id, vbo_id, num_vertices = vertex_array_buffer_objs_for_unit_cube()
+
+texture_id = load_texture("texture.jpg")
+shader_program_set_sampler_texture_units(shader_program_id, sampler_names=["texture1"])
+
+
+# main rendering loop
+while not glfw.window_should_close(window):
+    process_input(window)
+
+    clear_screen_before_render(
+        shader_program_id, background_colour=(0.3, 0.5, 0.7, 1.0)
+    )
+
+    bind_textures_to_texture_units(texture_ids=[texture_id])
+
+    model = model_matrix(
+        rot_x_rad=glfw.get_time(),
+        rot_y_rad=glfw.get_time() / 2,
+        rot_z_rad=glfw.get_time() / 3
+    )
+    send_matrix_to_shader(shader_program_id, "model", model)
+
+    view = view_matrix(camera_x=0.0, camera_y=0.0, camera_z=-3.0)
+    send_matrix_to_shader(shader_program_id, "view", view)
+
+    projection = projection_matrix(
+        fov_y_deg=45.0,
+        aspect_ratio=SCREEN_WIDTH_PX / SCREEN_HEIGHT_PX,
+        z_near=0.1,
+        z_far=100.0
+    )
+    send_matrix_to_shader(shader_program_id, "projection", projection)
+
+    render_triangles(vao_id, num_vertices)
+
+    glfw.swap_buffers(window)
+    glfw.poll_events()
+
+terminate(vao_id, vbo_id)</code>
+                </pre>
                 <p>
                     TODO: screenshot of resulting window
                 </p>
@@ -1024,6 +1143,7 @@ def terminate(vao_id: int, vbo_id: int):
 
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/glsl.min.js"></script>
     <script>hljs.highlightAll();</script>
 
 </html>
