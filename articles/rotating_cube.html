@@ -23,7 +23,7 @@
             <!-- Title-->
             <section class="article-title">
                 <h1>Rotating cube from scratch with PyOpenGL</h1>
-                <p class="major">July 2024</p>
+                <p class="major">August 2024</p>
                 <a id="home-button" href="../index.html">&lt;&nbsp;&nbsp;Home</a>
             </section>
 
@@ -1062,7 +1062,9 @@ SCREEN_WIDTH_PX = 800
 SCREEN_HEIGHT_PX = 600
 
 
-window = init_glfw_window_opengl(title=SCREEN_TITLE, screen_width=SCREEN_WIDTH_PX, screen_height=SCREEN_HEIGHT_PX)
+window = init_glfw_window_opengl(
+    title=SCREEN_TITLE, screen_width=SCREEN_WIDTH_PX, screen_height=SCREEN_HEIGHT_PX
+)
 
 vertex_shader_id = load_shader(file_name="vertex_shader.vs", shader_type="vertex")
 fragment_shader_id = load_shader(file_name="fragment_shader.fs", shader_type="fragment")
@@ -1114,11 +1116,28 @@ terminate(vao_id, vbo_id)</code>
                 </p>
 
                 <h3>References</h3>
-                <p>TODO</p>
-                https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview
-                https://learnopengl.com/Getting-started/OpenGL
-                https://austinmorlan.com/posts/rotation_matrices/
-                https://unspecified.wordpress.com/2012/06/21/calculating-the-gluperspective-matrix-and-other-opengl-matrix-maths/
+                <ol id="references">
+                    <li>
+                        de Vries, Joey. "OpenGL." <i>Learn OpenGL</i>, 2014,
+                        <a href="https://learnopengl.com/Getting-started/OpenGL" target="_blank">learnopengl.com/Getting-started/OpenGL</a>.
+                    </li>
+                    <li>
+                        "Rendering Pipeline Overview." <i>OpenGL Wiki</i>, 2022,
+                        <a href="https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview" target="_blank">
+                            www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview
+                        </a>.
+                    </li>
+                    <li>
+                        Morlan, Austin. "Deriving the 3D Rotation Matrix." <i>Austinmorlan.com</i>, 20 Apr. 2021,
+                        <a href="https://austinmorlan.com/posts/rotation_matrices/" target="_blank">austinmorlan.com/posts/rotation_matrices/</a>.
+                    </li>
+                    <li>
+                        Giuca, Matt. "Calculating the GluPerspective Matrix and Other OpenGL Matrix Maths." <i>Unspecified Behaviour</i>, 21 June 2012,
+                        <a href="https://unspecified.wordpress.com/2012/06/21/calculating-the-gluperspective-matrix-and-other-opengl-matrix-maths/" target="_blank">
+                            unspecified.wordpress.com/2012/06/21/calculating-the-gluperspective-matrix-and-other-opengl-matrix-maths/
+                        </a>.
+                    </li>
+                </ol>
             </section>
 
             <!-- Footer -->
