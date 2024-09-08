@@ -263,6 +263,11 @@ ol#references {
     width: 100%;
     margin-bottom: 2rem;
 }
+.padded-img {
+    width: 70% !important;
+    padding-left: 15% !important;
+    padding-right: 15% !important;
+}
 
 #home-button {
     display: block;
