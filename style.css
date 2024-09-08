@@ -227,6 +227,9 @@ p {
 p.major {
     font-size: 1.75rem;
 }
+p.no-margin {
+    margin: 0;
+}
 
 ul {
     padding-left: 3rem;

@@ -31,17 +31,19 @@
             <section class="article-body">
                 <h3>Context</h3>
                 <p>
-                    OpenGL is a popular graphics programming specification that is supported by most GPUs used today. OpenGL
-                    is implemented via graphics drivers that are typically written in C and provided by the GPU manufacturer,
-                    along with client and API libraries, typically written in assembly, C or C++, the latter of which a
-                    programmer can use to interact with the GPU. PyOpenGL is a Python binding to the OpenGL API, which is
-                    implemented with Python's ctypes foreign function interface and bridges the gap between Python and the
-                    lower-level API library, providing a close replica of the OpenGL API in Python.
+                    <a href="https://www.opengl.org/" target="_blank">OpenGL</a> is a popular graphics programming specification that is supported
+                    by most GPUs used today. It is implemented via graphics drivers that are typically written in C and provided by the GPU
+                    manufacturer, along with client and API libraries, typically written in assembly, C or C++, the latter of which a programmer
+                    can use to interact with the GPU. <a href="https://pyopengl.sourceforge.net/" target="_blank">PyOpenGL</a> is a Python binding
+                    to the OpenGL API, which is implemented with Python's
+                    <a href="https://docs.python.org/3/library/ctypes.html" target="_blank">ctypes foreign function interface</a> and bridges the
+                    gap between Python and the lower-level API library, providing a close replica of the OpenGL API in Python.
                 </p>
                 <p>
                     This article provides a basic overview of the OpenGL API, before detailing the mathematical
-                    transformations required to render a 3D cube in a 2D display. This theory is demonstrated via an
-                    implementation of the classic rotating cube exercise in PyOpenGL, without relying on GLM, which is OpenGL's
+                    transformations required to render a 3D cube to a 2D display. This theory is demonstrated via an
+                    implementation of the classic rotating cube exercise in PyOpenGL, without heavy reliance on
+                    <a href="https://github.com/g-truc/glm" target="_blank">GLM</a>, which is OpenGL's
                     mathematics library. This library abstracts the underlying maths by providing a set of functions for
                     constructing transformation matrices, but we will instead implement these transformations ourselves.
                 </p>
@@ -57,19 +59,20 @@
                 <p>
                     The transformation of 3D objects in memory to 2D pixels on a screen is performed by OpenGL's graphics
                     pipeline, comprised of a sequence of programs called shaders which run on the GPU and are written
-                    in GLSL (the openGL Shading Language). Modern GPUs have hundreds or even thousands of cores, each capable
+                    in <a href="https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)" target="_blank">GLSL</a> (which
+                    stands for "openGL Shading Language"). Modern GPUs have hundreds or even thousands of cores, each capable
                     of running a shader in parallel, which is why GPUs are so much faster than CPUs for graphics processing
                     (modern CPUs typically have 4-8 far more generalised cores).
                 </p>
                 <p>
                     The first stage of the graphics pipeline is the vertex shader, for which there is no default (we must
                     provide our own implementation of this step). This shader receives a single vertex as input, whose 3D
-                    coordinates $(x,y,z)$ are in "local space", meaning they are relative to the origin of the object the
+                    coordinates $(x,y,z) \in \mathbb{R}^3$ are in "local space", meaning they are relative to the origin of the object the
                     vertex belongs to. This shader is responsible for converting these local coordinates into 3D homogeneous
-                    "clip space" coordinates $(x_C, y_C, z_C, w_C)$, which are then used to determine which parts of objects
+                    "clip space" coordinates $(x_C, y_C, z_C, w_C) \in \mathbb{R}^4$, which are then used to determine which parts of objects
                     are visible on the screen. The vertex shader also forwards any other data associated with the vertex
-                    for use in later stages of the pipeline (such as 2D texture coordinates). The vertex shader achieves
-                    the local to clip space conversion by applying a sequence of transformations:
+                    for use in later stages of the pipeline (such as 2D texture coordinates). This local to clip space conversion
+                    is achieved by applying a sequence of transformations:
                     <ol>
                         <li>
                             the model transformation converts local coordinates to world coordinates, using information
@@ -94,15 +97,18 @@
                     triangles, depending on the context). Next is the clipping stage, where primitives lying outside the viewing
                     volume (defined by $-w_C \le x_C \le w_C$ and likewise for $y_C$ and $z_C$) are discarded, and primitives
                     only partially inside the volume are clipped to fit within it (a triangle may be split into multiple triangles
-                    here). Next is the perspective divide
-                    $$(x_{\text{NDC}}, y_{\text{NDC}}, z_{\text{NDC}}) \> = \> (\frac{x_C}{w_C}, \frac{y_C}{w_C}, \frac{z_C}{w_C})$$
-                    into normalised device coordinates where $|x_{\text{NDC}}| \le 1$, $|y_{\text{NDC}}| \le 1$ and
-                    $|z_{\text{NDC}}| \le 1$. After this is the viewport transformation, which converts NDC to window coordinates,
+                    here). Next is the perspective divide into normalised device coordinates:
+                    $$
+                        (x_{\text{NDC}}, y_{\text{NDC}}, z_{\text{NDC}})
+                        \> = \> (\frac{x_C}{w_C}, \frac{y_C}{w_C}, \frac{z_C}{w_C})
+                        \> \in \> [-1,1]^3.
+                    $$
+                    After this is the viewport transformation, which converts NDC to window coordinates,
                     which depends on the window size in pixels and the size of the device's depth buffer. Next is face culling,
                     where triangle primitives facing away from view in window space can be discarded, such that they don't need
-                    to be rendered. Then the pipeline performs rasterisation, where each primitive is mapped to a set fragments,
+                    to be rendered. Then the pipeline performs rasterisation, where each primitive is mapped to a set of fragments,
                     with at least one fragment per pixel displaying the primitive. A fragment is a collection of all data required
-                    to render a single pixel (which includes data that was forwarded from the vertex shader).
+                    to render a single pixel to the screen (which includes data that was forwarded from the vertex shader).
                 </p>
                 <p>
                     The next stage is the fragment shader, which, like the vertex shader, has no default implementation. This shader
@@ -117,38 +123,40 @@
                 <h3>Transformation Matrices</h3>
                 <p>
                     Before we start programming with PyOpenGL, we first need to define the model, view and projection
-                    transformations required to implement our vertex shader. Given a vertex with coordinates $(x,y,z)$, we
-                    represent this point in space by the vector of homogeneous coordinates
-                    $$\begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix},$$
+                    transformations required to implement our vertex shader. Given a vertex with coordinates $(x,y,z) \in \mathbb{R}^3$,
+                    we represent this point in space by the vector of homogeneous coordinates
+                    $$\begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} \in \mathbb{R}^4,$$
                     where the fourth coordinate will remain 1 until the projection transformation. Given this definition, we can
-                    represent a transformation of this point by a 4x4 matrix that is left-multiplied by the vector. An affine
+                    represent a transformation of this point by a real, 4x4 matrix that is left-multiplied by the vector. An affine
                     transformation such as a scaling, translation or rotation can be achieved with a matrix multiplication of
                     the form
                     $$
                     \begin{pmatrix}
-                        m_{11} & m_{12} & m_{13} & 0 \\
-                        m_{21} & m_{22} & m_{23} & 0 \\
-                        m_{31} & m_{32} & m_{33} & 0 \\
+                        a_{11} & a_{12} & a_{13} & b_1 \\
+                        a_{21} & a_{22} & a_{23} & b_2 \\
+                        a_{31} & a_{32} & a_{33} & b_3 \\
                         0 & 0 & 0 & 1
                     \end{pmatrix}
                     \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} \> = \>
                     \begin{pmatrix}
-                        m_{11} x + m_{12} y + m_{13} z \\
-                        m_{21} x + m_{22} y + m_{23} z \\
-                        m_{31} x + m_{32} y + m_{33} z \\
+                        a_{11} x + a_{12} y + a_{13} z + b_1 \\
+                        a_{21} x + a_{22} y + a_{23} z + b_2 \\
+                        a_{31} x + a_{32} y + a_{33} z + b_3 \\
                         1
                     \end{pmatrix},
                     $$
-                    and hence combining transformations is equivalent to multiplying their representative matrices.
-                    The inclusion of the fourth coordinate may seem pointless, but it allows us to represent translation
-                    and perspective projection transformations as matrix multiplications, which would not be possible with
+                    and hence combining transformations (e.g., a rotation followed by a translation) is equivalent to multiplying their
+                    representative matrices. The inclusion of the fourth coordinate may seem pointless, but it allows us to represent
+                    translation and perspective projection transformations as matrix multiplications, which would not be possible with
                     3x3 matrices.
                 </p>
-                <p>
+                <p class="no-margin">
                     A scale transformation with scaling factors $s_X, s_Y$ and $s_Z$ converts a point $(x,y,z,1)$ to the
                     point $(s_X x, s_Y y, s_Z z, 1)$, which is achieved by multiplying by the diagonal matrix
                     $$\begin{pmatrix} s_X & 0 & 0 & 0 \\ 0 & s_Y & 0 & 0 \\ 0 & 0 & s_Z & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
-                    We can write a Python function which returns this matrix as a 2D NumPy array given a set of scaling factors.
+                    We can write a Python function which returns this matrix as a 2D
+                    <a href="https://numpy.org/doc/stable/reference/generated/numpy.array.html" target="_blank">NumPy array</a>
+                    given a set of scaling factors.
                 </p>
                 <pre>
                     <code class="language-python">import numpy as np
@@ -164,11 +172,10 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
         [0.0, 0.0, 0.0, 1.0]
     ])</code>
                 </pre>
-                <br>
-                <p>
+                <p class="no-margin">
                     A translation transformation which translates by distance $t_X$ in the $x$-direction, $t_Y$ in the
                     $y$-direction and $t_Z$ in the $z$-direction, thus converting a point $(x,y,z,1)$ to the point
-                    $(x + t_X, y + t_Y, z + t_Z, 1)$, is achieved by the matrix:
+                    $(x + t_X, y + t_Y, z + t_Z, 1)$, is achieved by the matrix
                     $$\begin{pmatrix} 1 & 0 & 0 & t_X \\ 0 & 1 & 0 & t_Y \\ 0 & 0 & 1 & t_Z \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
                     This transformation can also be implemented as a simple Python function.
                 </p>
@@ -181,7 +188,6 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
         [0.0, 0.0, 0.0, 1.0]
     ])</code>
                 </pre>
-                <br>
                 <p>
                     A rotation in 3D space is defined by a (unit vector) axis and an angle of rotation about that axis. Any rotation
                     in three dimensions can be achieved by a composition of rotations about the standard basis vectors
@@ -190,8 +196,8 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                         \boldsymbol{j} = \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix}, \>\>
                         \boldsymbol{k} = \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}.
                     $$
-                    Let's focus on a rotation about the $z$-axis / basis vector $\boldsymbol{k}$ by some acute angle $\theta$, and
-                    consider how the other two basis vectors $\boldsymbol{i}$ and $\boldsymbol{j}$ are transformed to vectors
+                    Let's focus on a rotation about the $z$-axis / basis vector $\boldsymbol{k}$ by some acute angle $\theta \in (0,\frac{\pi}{2})$
+                    radians, and consider how the other two basis vectors $\boldsymbol{i}$ and $\boldsymbol{j}$ are transformed to vectors
                     $\boldsymbol{i}^{\prime}$ and $\boldsymbol{j}^{\prime}$ respectively.
                 </p>
                 <img src="../images/rotating_cube_rotation.png" alt="Diagram of 3D standard basis vectors i and j rotated about k." class="padded-img">
@@ -199,7 +205,7 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     We can form a right-angled triangle in the first quadrant of the $xy$-plane with $\boldsymbol{i}^{\prime}$ as
                     the hypotenuse, its $x$-component the adjacent side and its $y$-component the opposite side. The hypotenuse has
                     unit length because a rotation preserves the length of a vector, and the angle at the origin is $\theta$, and
-                    hence we the definitions of sine and cosine give
+                    hence the definitions of sine and cosine give
                     $$
                         \cos(\theta) = \frac{\text{adj}}{\text{hyp}} = \frac{i^{\prime}_x}{1}, \>\>
                         \sin(\theta) = \frac{\text{opp}}{\text{hyp}} = \frac{i^{\prime}_y}{1},
@@ -217,19 +223,19 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                         \boldsymbol{k}^{\prime} = \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}.
                     $$
                     It can be shown that these results generalise to a rotation by any angle $\theta$. For an obtuse $\theta$, we
-                    can draw the above triangles for the acute angle $180^{\deg}-\theta$ between the rotated basis vector and the
-                    $x$ and $y$ axes, then using the fact that $\cos(180^{\deg}-\theta) = -\cos(\theta)$ and
-                    $\sin(180^{\deg}-\theta) = \sin(\theta)$, we will arrive at the same transformed basis vectors. A similar approach
-                    can be used for reflex angles $\theta$, then utilising the fact that angles that are equal modulo $360^{\deg}$
+                    can draw the above triangles for the acute angle $180^{\circ} - \theta$ between the rotated basis vector and the
+                    $x$ and $y$ axes, then using the fact that $\cos(180^{\circ}-\theta) = -\cos(\theta)$ and
+                    $\sin(180^{\circ}-\theta) = \sin(\theta)$, we will arrive at the same transformed basis vectors. A similar approach
+                    can be used for reflex angles $\theta$, then utilising the fact that angles that are equal modulo $360^{\circ}$
                     produce equivalent rotations, we can claim that the above results apply to any angle $\theta$.
                 </p>
-                <p>
+                <p class="no-margin">
                     For a general vector $\boldsymbol{v}$, the definition of the standard basis vectors gives us that
                     $$
-                        \boldsymbol{v} \> = \> \begin{pmatrix} v_x \\ v_y \\ v_y \end{pmatrix}
+                        \boldsymbol{v} \> = \> \begin{pmatrix} v_x \\ v_y \\ v_z \end{pmatrix}
                         \> = \> v_x \boldsymbol{i} + v_y \boldsymbol{j} + v_z \boldsymbol{k}
                     $$
-                    (i.e. $\boldsymbol{v}$ is a linear combination of the standard basis vectors, with coefficients equal to its
+                    (i.e., $\boldsymbol{v}$ is a linear combination of the standard basis vectors, with coefficients equal to its
                     entries), and hence the rotation of $\boldsymbol{v}$ about the $z$-axis by angle $\theta$ is
                     $$
                     \boldsymbol{v}^{\prime} \> = \> v_x \boldsymbol{i}^{\prime} + v_y \boldsymbol{j}^{\prime} + v_z \boldsymbol{k}^{\prime}
@@ -340,7 +346,6 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
 
     return rot_matrix</code>
                 </pre>
-                <br>
 
                 <h3>Model Transformation</h3>
                 <p>
