@@ -122,9 +122,12 @@
 
                 <h3>Transformation Matrices</h3>
                 <p>
-                    Before we start programming with PyOpenGL, we first need to define the model, view and projection
-                    transformations required to implement our vertex shader. Given a vertex with coordinates $(x,y,z) \in \mathbb{R}^3$,
-                    we represent this point in space by the vector of homogeneous coordinates
+                    We now have a basic, theoretical understanding of how OpenGL works. However, before we can move on to writing any PyOpenGL code, we
+                    need to understand what a transformation matrix is and derive the matrix representations of scale, translation and rotation
+                    transformations. Using these, we will define the model, view and projection transformations required by our vertex shader.
+                </p>
+                <p>
+                    Given a vertex with coordinates $(x,y,z) \in \mathbb{R}^3$, we represent this point in space by the vector of homogeneous coordinates
                     $$\begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} \in \mathbb{R}^4,$$
                     where the fourth coordinate will remain 1 until the projection transformation. Given this definition, we can
                     represent a transformation of this point by a real, 4x4 matrix that is left-multiplied by the vector. An affine
@@ -150,7 +153,7 @@
                     translation and perspective projection transformations as matrix multiplications, which would not be possible with
                     3x3 matrices.
                 </p>
-                <p class="no-margin">
+                <p>
                     A scale transformation with scaling factors $s_X, s_Y$ and $s_Z$ converts a point $(x,y,z,1)$ to the
                     point $(s_X x, s_Y y, s_Z z, 1)$, which is achieved by multiplying by the diagonal matrix
                     $$\begin{pmatrix} s_X & 0 & 0 & 0 \\ 0 & s_Y & 0 & 0 \\ 0 & 0 & s_Z & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
@@ -158,8 +161,7 @@
                     <a href="https://numpy.org/doc/stable/reference/generated/numpy.array.html" target="_blank">NumPy array</a>
                     given a set of scaling factors.
                 </p>
-                <pre>
-                    <code class="language-python">import numpy as np
+                <pre><code class="language-python">import numpy as np
 import numpy.typing as npt
 
 
@@ -170,24 +172,23 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
         [0.0, s_y, 0.0, 0.0],
         [0.0, 0.0, s_z, 0.0],
         [0.0, 0.0, 0.0, 1.0]
-    ])</code>
-                </pre>
-                <p class="no-margin">
+    ])</code></pre>
+                <br>
+                <p>
                     A translation transformation which translates by distance $t_X$ in the $x$-direction, $t_Y$ in the
                     $y$-direction and $t_Z$ in the $z$-direction, thus converting a point $(x,y,z,1)$ to the point
                     $(x + t_X, y + t_Y, z + t_Z, 1)$, is achieved by the matrix
                     $$\begin{pmatrix} 1 & 0 & 0 & t_X \\ 0 & 1 & 0 & t_Y \\ 0 & 0 & 1 & t_Z \\ 0 & 0 & 0 & 1 \end{pmatrix}.$$
                     This transformation can also be implemented as a simple Python function.
                 </p>
-                <pre>
-                    <code class="language-python">def translation_matrix(t_x: float, t_y: float, t_z: float) -> npt.NDArray:
+                <pre><code class="language-python">def translation_matrix(t_x: float, t_y: float, t_z: float) -> npt.NDArray:
     return np.array([
         [1.0, 0.0, 0.0, t_x],
         [0.0, 1.0, 0.0, t_y],
         [0.0, 0.0, 1.0, t_z],
         [0.0, 0.0, 0.0, 1.0]
-    ])</code>
-                </pre>
+    ])</code></pre>
+                <br>
                 <p>
                     A rotation in 3D space is defined by a (unit vector) axis and an angle of rotation about that axis. Any rotation
                     in three dimensions can be achieved by a composition of rotations about the standard basis vectors
@@ -229,7 +230,7 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     can be used for reflex angles $\theta$, then utilising the fact that angles that are equal modulo $360^{\circ}$
                     produce equivalent rotations, we can claim that the above results apply to any angle $\theta$.
                 </p>
-                <p class="no-margin">
+                <p>
                     For a general vector $\boldsymbol{v}$, the definition of the standard basis vectors gives us that
                     $$
                         \boldsymbol{v} \> = \> \begin{pmatrix} v_x \\ v_y \\ v_z \end{pmatrix}
@@ -278,10 +279,10 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     which, as mentioned already, can also be achieved by a product of the three basis vector rotations (but this
                     approach can sometimes lead to numerical instability, so many advanced programs using vector rotations prefer
                     to use a direct rotation like this). Given angles of rotation about the $x$, $y$ and $z$ axes, we can write a
-                    Python function which returns the resulting rotation matrix product.
+                    Python function which returns the resulting rotation matrix product, with flexible input parameters that allow
+                    the angles to be provided in degrees or radians.
                 </p>
-                <pre>
-                    <code class="language-python">def rotation_matrix(
+                <pre><code class="language-python">def rotation_matrix(
     theta_x_deg: float = 0.0,
     theta_x_rad: float = 0.0,
     theta_y_deg: float = 0.0,
@@ -344,16 +345,22 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
             [0.0, 0.0, 0.0, 1.0]
         ])
 
-    return rot_matrix</code>
-                </pre>
+    return rot_matrix</code></pre>
+                <br>
 
-                <h3>Model Transformation</h3>
+                <h3>Model and View Transformations</h3>
+                <p>
+                    We have derived the matrix representations of scale, translation and rotation transformations, and written some handy Python
+                    functions which construct these matrices as 2D Numpy arrays. We can now use these to write utility functions which, given
+                    the appropriate parameters, return matrices for the model and view transformations.
+                </p>
                 <p>
                     The model transformation in the vertex shader transforms a vertex's local coordinates to world
                     coordinates, using the position, orientation and scale of the object that the vertex belongs to. Hence,
                     the model transformation matrix is the product of a scale, rotation and translation matrix (in that
-                    order, as scaling after translating would also scale the translation). We can use the functions we
-                    wrote in the previous section to construct this matrix in Python.
+                    order, as scaling after translating would also scale the translation). Therefore, we can construct
+                    a model matrix by calling our scale, rotation and translation functions and multiplying these component
+                    matrices together in the correct order.
                 </p>
                 <pre><code class="language-python">def model_matrix(
     scale_x: float = 1.0,
@@ -380,14 +387,14 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
         model @= translation_matrix(trans_x, trans_y, trans_z)
     return model</code></pre>
                 <br>
-
-                <h3>View Transformation</h3>
                 <p>
                     The view transformation in the vertex shader transforms a vertex's world coordinates to view
                     coordinates, using the position and orientation of the camera in the world, in order to render
                     the world from the camera's perspective. Hence, the view transformation matrix is the product
                     of a translation and rotation matrix (in that order, as the rotation axis should stem from the
-                    camera's position). Constructing the view matrix in Python is even simpler than the model matrix.
+                    camera's position). Note that the first three arguments of the function below specify the position of the camera in
+                    the world, and hence the translation required to "move" the camera to the origin uses the
+                    negation of these coordinates.
                 </p>
                 <pre><code class="language-python">def view_matrix(
     camera_x: float = 0.0,
@@ -400,22 +407,24 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
     rot_z_deg: float = 0.0,
     rot_z_rad: float = 0.0
 ) -> npt.NDArray:
-    view = translation_matrix(camera_x, camera_y, camera_z)
+    view = translation_matrix(-camera_x, -camera_y, -camera_z)
     if (
         rot_x_deg != 0.0 or rot_x_rad != 0.0 or
         rot_y_deg != 0.0 or rot_y_rad != 0.0 or
         rot_z_deg != 0.0 or rot_z_rad != 0.0
     ):
         view @= rotation_matrix(rot_x_deg, rot_x_rad, rot_y_deg, rot_y_rad, rot_z_deg, rot_z_rad)
-    return view</code>
-                </pre>
+    return view</code></pre>
                 <br>
 
                 <h3>Projection Transformation</h3>
                 <p>
-                    The perspective projection transformation defines a "rectangular frustum" volume in camera space which is
-                    indirectly transformed to the $[-1,+1]$ cube in NDC/viewport space. This frustum is a sideways pyramid with
-                    a rectangle for a base and its apex cut off (with the base facing away from the camera and the clipped apex
+                    The final transformation required by the vertex shader is the projection transformation. For this article,
+                    we will focus on just the perspective projection, which results in a "realistic" rendering of a 3D scene,
+                    as opposed to an orthographic projection which results in a "flat" rendering (which is useful for some applications
+                    such as CAD software). The perspective projection transformation defines a "rectangular frustum" volume in camera
+                    space which is indirectly transformed to the $[-1,1]$ cube in NDC/viewport space. This frustum is a sideways pyramid
+                    with a rectangle for a base and its apex cut off (with the base facing away from the camera and the clipped apex
                     pointing towards the camera). We say "indirectly", because this matrix actually transforms from camera space
                     to "clip space" (which still uses 3D homogeneous coordinates), which is a precursor to NDC space. After the
                     vertex shader, OpenGL efficiently performs the perspective divide to convert clip space coordinates to NDC,
@@ -452,8 +461,8 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     by $x_{\text{NDC}}$, $y_{\text{NDC}}$ and $z_{\text{NDC}}$.
                 </p>
                 <p> 
-                    Given some $z_{\text{cam}}$ \in $[-Z_{\text{far}}, -Z_{\text{near}}]$ inside the frustum, we can draw a right-
-                    angled triangle on the $zy$-plane between the points $(0,0,0)$, $(0,0,z_{\text{cam}})$ and
+                    Given some $z_{\text{cam}} \in [-Z_{\text{far}}, -Z_{\text{near}}]$ inside the frustum, we can draw a right-angled
+                    triangle on the $zy$-plane between the points $(0,0,0)$, $(0,0,z_{\text{cam}})$ and
                     $(0,y_{\text{bdy}},z_{\text{cam}})$, where $y_{\text{bdy}}$ is the half-height of the frustum at this
                     $z$-coordinate (so the third point lies on the top trapezium face of the frustum). The angle inside this triangle
                     at the origin is $\frac{\theta_y}{2}$, and hence we can claim that
@@ -475,27 +484,27 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     $$F_x \> = \> \frac{F_y}{A},$$
                     where dividing by the aspect ratio accounts for the different width of the frustum along the x-axis, and so
                     $$x_{\text{NDC}} \> = \> x_{\text{cam}} \cdot \frac{F_y}{A \cdot -z_{\text{cam}}}.$$
-                    The inclusion of $-z_{\text{cam}}$ on the denominator of this transformation is what causes objects further from
-                    the camera to appear smaller on the screen, which is a defining quality of the perspective projection over the
-                    orthographic projection.
+                    The inclusion of $-z_{\text{cam}}$ on the denominator of the expressions for $x_{\text{NDC}}$ and $y_{\text{NDC}}$
+                    is what causes objects further from the camera to appear smaller on the screen, which is a defining quality of the
+                    perspective projection over the orthographic projection.
                 </p>
                 <p>
-                    Now it is left to transform $z_{\text{cam}}$ \in $[-Z_{\text{far}}, -Z_{\text{near}}]$ to
-                    $z_{\text{NDC}}$ \in $[-1, 1]$. The standard approach is to use a reciprocal function such that objects further
+                    Now it is left to transform $z_{\text{cam}} \in [-Z_{\text{far}}, -Z_{\text{near}}]$ to
+                    $z_{\text{NDC}} \in [-1, 1]$. The standard approach is to use a reciprocal function such that objects further
                     from the camera appear smaller in depth, and it also ensures that $z$-coordinates closer to the camera consume a
                     disproportionately large part of the depth buffer (because objects close to the camera will be focused on more by
                     the viewer, and hence numerical imprecision causing objects that should have slightly different $z$-coordinates to
                     instead overlap would be more problematic if seen up close). Therefore, we establish that
                     $$z_{\text{NDC}} \> = \> \frac{\alpha}{z_{\text{cam}}} + \beta$$
-                    for some constants $\alpha$ and $\beta$. We know that $z_{\text{cam}} = -Z_{\text{near}}$ is transformed to the
-                    close face of the cube $z_{\text{NDC}} = -1$, and substituting this gives
+                    for some constants $\alpha$ and $\beta$. We know that the near plane of the frustum $z_{\text{cam}} = -Z_{\text{near}}$
+                    is transformed to the close face of the cube $z_{\text{NDC}} = -1$, and substituting this gives
                     $$\begin{aligned}
                         -1 \> &= \frac{\alpha}{-Z_{\text{near}}} + \beta \\
                         \Rightarrow \> -1 - \beta \> &= \frac{\alpha}{-Z_{\text{near}}} \\
                         \Rightarrow \> \alpha \> &= (-1 - \beta) \cdot -Z_{\text{near}}.
                     \end{aligned}$$
-                    Similarly, we know that $z_{\text{cam}} = -Z_{\text{far}}$ is transformed to the far face of the cube
-                    $z_{\text{NDC}} = 1$, and so
+                    Similarly, we know that the far plane of the frustum $z_{\text{cam}} = -Z_{\text{far}}$ is transformed to the far
+                    face of the cube $z_{\text{NDC}} = 1$, and so
                     $$\begin{aligned}
                         1 \> &= \frac{\alpha}{-Z_{\text{far}}} + \beta \\
                         \Rightarrow \> 1 - \beta \> &= \frac{\alpha}{-Z_{\text{far}}} \\
@@ -508,14 +517,14 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                         \Rightarrow \> \beta Z_{\text{near}} - \beta Z_{\text{far}} \> &= \> -Z_{\text{far}} - Z_{\text{near}} \\
                         \Rightarrow \> \beta \> &= \> -\frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}},
                     \end{aligned}$$
-                    which is the constant value of $\beta$. Substituting this back into the second expression for $\alpha$ gives
+                    which is the constant value of $\beta$. Substituting this back into the second expression for $\alpha$ shows that
                     $$\begin{aligned}
                         \alpha \> &= \> (1 - \beta) \cdot -Z_{\text{far}} \\
                         &= \> (1 + \frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}}) \cdot -Z_{\text{far}} \\
                         &= \> -Z_{\text{far}} \frac{Z_{\text{near}} - Z_{\text{far}} + Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}} \\
                         &= \> -\frac{2 Z_{\text{near}} Z_{\text{far}}}{Z_{\text{near}} - Z_{\text{far}}}.
                     \end{aligned}$$
-                    Finally, substituting these constants back into our formula for $z_{\text{NDC}}$ gives
+                    Finally, substituting these constants back into our formula for $z_{\text{NDC}}$ concludes that
                     $$\begin{aligned}
                         z_{\text{NDC}} \> &= \> \frac{\alpha}{z_{\text{cam}}} + \beta \\
                         &= \> - \frac{2 Z_{\text{near}} Z_{\text{far}}}{z_{\text{cam}}(Z_{\text{near}} - Z_{\text{far}})}
@@ -533,7 +542,7 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     $x_{\text{cam}}$, $y_{\text{cam}}$ and $z_{\text{cam}}$, but notice that these form a non-linear transformation
                     from camera space to NDC/viewport space due to the common divisor of $-z_{\text{cam}}$ in the formulae. This is
                     where the purpose of the intermediate "clip space" becomes evident. As previously defined, NDC are computed from
-                    clip space coordinates using the perspective divide operation (which OpenGL performs very efficiently for us):
+                    clip space coordinates using the perspective divide operation (which OpenGL performs very efficiently for us)
                     $$
                         x_{\text{NDC}} = \frac{x_{\text{clip}}}{w_{\text{clip}}}, \>
                         y_{\text{NDC}} = \frac{y_{\text{clip}}}{w_{\text{clip}}}, \>
@@ -548,19 +557,17 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     \end{aligned}$$
                     all of which are linear equations of the camera coordinates. Therefore, we can define the perspective projection
                     transformation from camera space to clip space as multiplication by the matrix
-                    $$
-                    \begin{pmatrix}
+                    $$\begin{pmatrix}
                         \frac{F_y}{A} & 0 & 0 & 0 \\
                         0 & F_y & 0 & 0 \\
                         0 & 0 & \frac{Z_{\text{far}} + Z_{\text{near}}}{Z_{\text{near}} - Z_{\text{far}}} &
                         \frac{2 Z_{\text{near}} Z_{\text{far}}}{Z_{\text{near}} - Z_{\text{far}}} \\
                         0 & 0 & -1 & 0
-                    \end{pmatrix}.
+                    \end{pmatrix}.$$
                     Finally, we can implement a simple Python function that returns this matrix given the field of view, aspect ratio,
                     and the near and far clipping planes.
                 </p>
-                <pre>
-                    <code class="language-python">def projection_matrix(
+                <pre><code class="language-python">def projection_matrix(
     fov_y_deg: float = 0.0,
     fov_y_rad: float = 0.0,
     aspect_ratio: float = 4/3,
@@ -571,7 +578,7 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
     assert 0 <= z_near < z_far, "z_near must be >= 0 and z_far must be > z_near"
 
     # convert input to radians
-    assert (fov_y_deg <= 0.0) != (fov_y_rad <= 0.0), "Exactly one field of view input must be provided"
+    assert (fov_y_deg > 0.0) != (fov_y_rad > 0.0), "Exactly one field of view input must be provided"
     if fov_y_rad == 0.0:
         fov_y_rad = fov_y_deg * np.pi / 180.0
 
@@ -582,8 +589,8 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
         [0.0, factor_y, 0.0, 0.0],
         [0.0, 0.0, (z_far + z_near) / (z_near - z_far), (2 * z_near * z_far) / (z_near - z_far)],
         [0.0, 0.0, -1.0, 0.0]
-    ])</code>
-                </pre>
+    ])</code></pre>
+                <br>
 
                 <h3>PyOpenGL Implementation</h3>
                 <p>
