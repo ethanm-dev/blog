@@ -6,7 +6,7 @@
         <meta name="description" content="A guide to the mathematics behind 3D graphics and a tutorial on rendering a cube in Python using PyOpenGL.">
         <meta name="author" content="Ethan Mitchell">
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-        <link rel="shortcut icon" type="image/png" href="images/e.png"/>
+        <link rel="shortcut icon" type="image/png" href="../images/e.png"/>
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -604,13 +604,12 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     <a href="https://github.com/FlorianRhiem/pyGLFW", target="_blank">pyGLFW</a>, which is a Python binding to
                     <a href="https://www.glfw.org/", target="_blank">GLFW</a>, an OpenGL utility library that provides a simple API for managing windows and handling
                     input. This function receives the window's title, width and height (in pixels) as input, and starts by initialising GLFW, which involves setting
-                    the OpenGL version and profile (the core profile is the most modern and doesn't include deprecated features). It then creates a window (which also
-                    creates its OpenGL context, which is then made current) and sets a callback function to handle window resizing. Finally, OpenGL is configured,
+                    the OpenGL version and profile (the core profile is the most modern and doesn't include deprecated features). It then creates a window (alongside
+                    its OpenGL context, which is then made current) and sets a callback function to handle window resizing. Finally, OpenGL is configured,
                     which in our case only involves enabling depth testing (which will ensure that closer objects are rendered in front of objects further from the
                     camera). This function returns the window object for later use.
                 </p>
-                <pre>
-                    <code class="language-python">import glfw
+                <pre><code class="language-python">import glfw
 from OpenGL.GL import *
 
 
@@ -639,11 +638,11 @@ def init_glfw_window_opengl(title: str, screen_width: int = 800, screen_height: 
     # init OpenGL options
     glEnable(GL_DEPTH_TEST)
 
-    return window</code>
-                </pre>
+    return window</code></pre>
+                <br>
                 <p>
                     Before we continue with PyOpenGL, we need to define our vertex and fragment shaders. We write our shaders in GLSL (the OpenGL Shading Language),
-                    which is very similar to C but notably provides vector and matrix types tailored for graphics programming. The vertex shader is written as
+                    which is very similar to C but also provides vector and matrix types tailored for graphics programming. The vertex shader is written as
                     follows:
                     <ul>
                         <li>the first line defines the version of GLSL we are using;</li>
@@ -653,23 +652,23 @@ def init_glfw_window_opengl(title: str, screen_width: int = 800, screen_height: 
                             dimensional);
                         </li>
                         <li>
-                            following this, we define the vertex shader's output variables (in addition to the default output vector `gl_Position`), which in our case
-                            is a 2D texture coordinate vector we wish to forward to the fragment shader;
+                            following this, we define the vertex shader's output variables (in addition to the default output vector <code>gl_Position</code>), which
+                            in our case is a 2D texture coordinate vector we wish to forward to the fragment shader;
                         </li>
                         <li>
                             then we define uniforms, which are global variables (per shader program) which are set by the application (running on the CPU) and can be
-                            accessed by any shader (running on the GPU), and these only change when the application explicitly sets them; and
+                            accessed by any shader (running on the GPU), and these only change when the application explicitly sets them (in our case, we have
+                            uniforms for the model, view and projection transformation matrices); and
                         </li>
                         <li>
-                            finally we define the main function of the shader (where we can use our inputs and uniforms), where the first line multiplies the model,
-                            view and projection matrices by the input vertex (after it is converted to homogeneous coordinates) and assigns this output clip space
-                            vector to the pre-defined `gl_Position` variable, and the second line simply assigns the input texture coordinate to the output texture
-                            coordinate.
+                            finally we define the main function of the shader (inside which we can use our inputs and uniforms), where the first line multiplies
+                            the model, view and projection matrices by the input vertex (after it is converted to homogeneous coordinates) and assigns this output
+                            clip space vector to the <code>gl_Position</code> variable, and the second line simply assigns the input texture coordinate to the
+                            output texture coordinate.
                         </li>
                     </ul>
                 </p>
-                <pre>
-                    <code class="language-glsl">#version 330 core
+                <pre><code class="language-glsl">#version 330 core
 layout (location = 0) in vec3 input_pos;
 layout (location = 1) in vec2 input_tex_coord;
 
@@ -683,11 +682,11 @@ void main()
 {
     gl_Position = projection * view * model * vec4(input_pos, 1.0f);
     texture_coord = vec2(input_tex_coord.x, input_tex_coord.y);
-}</code>
-                </pre>
+}</code></pre>
+                <br>
                 <p>
-                    We save the above vertex shader code to a file called `vertex_shader.vs`. We also define our fragment shader and save it to a file called
-                    `fragment_shader.fs`, and this shader is written as follows:
+                    We save the above vertex shader code to a file called <code>vertex_shader.vs</code>. We also define our fragment shader and save it to a
+                    file called <code>fragment_shader.fs</code>, and this shader is written as follows:
                     <ul>
                         <li>the first line defines the version of GLSL we are using;</li>
                         <li>
@@ -697,20 +696,19 @@ void main()
                         </li>
                         <li>
                             following this, we define a single output variable, which is a 4D vector holding the RGBA colour of the fragment (the name of this
-                            variable doesn't matter, as OpenGL automatically forwards the singular `vec4` output of our fragment shader down the pipeline);
+                            variable doesn't matter, as OpenGL automatically forwards the singular <code>vec4</code> output of our fragment shader down the pipeline);
                         </li>
                         <li>
-                            next we define a uniform variable, which is a `sampler2D` type which provides the fragment shader access to a 2D texture (we will
-                            set this uniform to our texture object in the application code); and
+                            next we define a uniform variable, which is a <code>sampler2D</code> type that provides the fragment shader access to a 2D texture
+                            (we will set this uniform to our texture object in an upcoming utility function); and
                         </li>
                         <li>
-                            finally we define the main function of the shader, where we use GLSL's built-in `texture` function to sample the texture at the
-                            input texture coordinate, and assign the resulting colour to the shader's output colour variable.
+                            finally we define the main function of the shader, where we use GLSL's built-in <code>texture</code> function to sample the texture
+                            at the input texture coordinate, and assign the resulting colour to the shader's output colour variable.
                         </li>
                     </ul>
                 </p>
-                <pre>
-                    <code class="language-glsl">#version 330 core
+                <pre><code class="language-glsl">#version 330 core
 in vec2 texture_coord;
 
 out vec4 fragment_colour;
@@ -720,16 +718,15 @@ uniform sampler2D texture1;
 void main()
 {
     fragment_colour = texture(texture1, texture_coord);
-}</code>
-                </pre>
+}</code></pre>
+                <br>
                 <p>
-                    Now that we have defined our shaders, we can implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
+                    Now that we have defined our shaders, we implement a utility function which loads a shader's source code from file, creates an OpenGL "shader
                     object" for it, attaches the source code and compiles it, then returns the shader object's ID. This function also checks for compilation errors,
                     such that this utility function successfully returning implies that the shader's source code is valid. The arguments to this function are simply
                     the file path of the shader's source code and the type of shader (either "vertex" or "fragment").
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 from pathlib import Path
 
 
@@ -748,8 +745,8 @@ def load_shader(file_name: str, shader_type: str = "vertex") -> int:
     if not success:
         raise RuntimeError(f"Failed to compile {shader_type} shader: {glGetShaderInfoLog(shader_id).decode()}")
 
-    return shader_id</code>
-                </pre>
+    return shader_id</code></pre>
+                <br>
                 <p>
                     After using the above function to initialise a vertex shader and fragment shader, the next step is to create a "shader program", which is an
                     object comprising compiled shaders that are linked together (where outputs are matched to downstream inputs to check for compatibility). We can
@@ -757,8 +754,7 @@ def load_shader(file_name: str, shader_type: str = "vertex") -> int:
                     ID as input, attaches them to a new shader program, links the program (checking for errors), deletes the individual shader objects, then returns
                     the new shader program's ID.
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 
 
 def create_shader_program(vertex_shader_id: int, fragment_shader_id: int) -> int:
@@ -774,23 +770,25 @@ def create_shader_program(vertex_shader_id: int, fragment_shader_id: int) -> int
     glDeleteShader(vertex_shader_id)
     glDeleteShader(fragment_shader_id)
 
-    return program_id</code>
-                </pre>
+    return program_id</code></pre>
+                <br>
                 <p>
                     We now look to implement a utility function that loads the vertex data for a unit cube, which comprises five floating point numbers per vertex:
                     the $x$, $y$ and $z$ coordinates of the vertex in model space, and the 2D texture coordinates $s$ and $t$. Given a 2D texture, the bottom-left
                     corner has coordinates $(s,t) = (0,0)$ and the top-right corner has coordinates $(1,1)$. Specifying the texture coordinates for each vertex of
                     the cube defines precisely how the texture is to be mapped onto the cube's faces, as each fragment's texture coordinate is interpolated from
-                    the vertex texture coordinates of the primitive (in our case, a triangle) it belongs to. The fragment shader performs the task of sampling from
+                    the vertex texture coordinates of the primitive (in our case, the triangle) it belongs to. The fragment shader performs the task of sampling from
                     the texture at these interpolated coordinates to determine the fragment's colour.
                 </p>
                 <p>
                     This function begins by defining the vertices of the unit cube as a 1D GLM floating point array, where each square face is defined by two
-                    triangle primitives. Next, we create a vertex array object (VAO, which stores vertex attribute configurations) and a vertex buffer object (VBO,
+                    triangle primitives (each of which is defined by three vertices).
+                    Next, we create a vertex array object (VAO, which stores vertex attribute configurations) and a vertex buffer object (VBO,
                     which stores vertex data such that it can be sent to the GPU all at once instead of one vertex at a time). We bind the VAO and VBO to the
                     current OpenGL context, then load the vertex data into the VBO by specifying: which bound buffer to load data into, the size of the data in
-                    bytes, a pointer to the data, and a GPU usage hint (in this case, `GL_STATIC_DRAW` indicates that the data will not be modified frequently).
-                    Finally, we call the `glVertexAttribPointer` function (per vertex attribute) to specify the layout of the vertex data in the VBO:
+                    bytes, a pointer to the data, and a GPU usage hint (in our case, <code>GL_STATIC_DRAW</code> indicates that the data will not be modified
+                    frequently). Finally, we call the <code>glVertexAttribPointer</code> function (per vertex attribute) to specify the layout of the vertex
+                    data in the VBO:
                     <ul>
                         <li>the first argument is the index/position of the attribute we are configuring;</li>
                         <li>next is the size of the attribute in values;</li>
@@ -799,12 +797,14 @@ def create_shader_program(vertex_shader_id: int, fragment_shader_id: int) -> int
                         <li>the fifth argument is the stride between consecutive vertices (in bytes, which equals the total size of each vertex's data); and</li>
                         <li>the final argument is an offset from the start of each vertex's data to the start of this attribute's data.</li>
                     </ul>
-                    Following each call to this function, we call `glEnableVertexAttribArray` to enable the attribute (all vertex attributes are disabled by default).
-                    Finally, our utility function returns the VAO and VBO IDs and the number of vertices comprising the cube. Note that we only need the VBO ID for
-                    deleting this object when the program terminates, as the VAO maintains an internal reference to the VBO which we will use when rendering.
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <p>
+                    Following each call to this function, we call <code>glEnableVertexAttribArray</code> to enable the attribute (all vertex attributes are
+                    disabled by default). Finally, our utility function returns the VAO and VBO IDs and the number of vertices comprising the cube. Note that
+                    we only need the VBO ID for deleting this object when the program terminates, as the VAO maintains an internal reference to the VBO which
+                    we will use when rendering.
+                </p>
+                <pre><code class="language-python">from OpenGL.GL import *
 import glm
 
 
@@ -867,24 +867,26 @@ def vertex_array_buffer_objs_for_unit_cube() -> tuple[int, int, int]:
     glEnableVertexAttribArray(0)
 
     # texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * glm.sizeof(glm.float32), ctypes.c_void_p(3 * glm.sizeof(glm.float32)))
+    glVertexAttribPointer(
+        1, 2, GL_FLOAT, GL_FALSE, 5 * glm.sizeof(glm.float32), ctypes.c_void_p(3 * glm.sizeof(glm.float32))
+    )
     glEnableVertexAttribArray(1)
 
-    return vao_id, vbo_id, len(vertices) // 5</code>
-                </pre>
+    return vao_id, vbo_id, len(vertices) // 5</code></pre>
+                <br>
                 <p>
                     Next up, we need a utility function for loading a texture from an image file. This function receives the file path of the texture image as input and:
                     <ul>
                         <li>checks the file path is valid;</li>
                         <li>creates a texture object and binds it to the OpenGL context, which makes it the currently active 2D texture for manipulation;</li>
                         <li>
-                            sets the texture wrapping method for the `S` (horizontal) and `T` (vertical) axes to `GL_REPEAT` (so texture coordinates outside the
-                            $[0,1]$ range will be handled by repeating the texture image like a tile);
+                            sets the texture wrapping method for the <code>S</code> (horizontal) and <code>T</code> (vertical) axes to <code>GL_REPEAT</code> (so
+                            texture coordinates outside the $[0,1]$ range will be handled by repeating the texture image like a tile);
                         </li>
                         <li>
-                            sets the texture filtering method for minifying (scaling down) to `GL_LINEAR_MIPMAP_LINEAR` (a linear interpolation of the two nearest
-                            mipmap levels, with linear interpolation between the four nearest texels in each mipmap level), and for magnifying (scaling up) to
-                            `GL_LINEAR` (a linear interpolation of the four nearest texels);
+                            sets the texture filtering method for minifying (scaling down) to <code>GL_LINEAR_MIPMAP_LINEAR</code> (a linear interpolation of the
+                            two nearest mipmap levels, with linear interpolation between the four nearest texels in each mipmap level), and for magnifying (scaling
+                            up) to <code>GL_LINEAR</code> (a linear interpolation of the four nearest texels);
                         </li>
                         <li>
                             loads the image file using the <a href="https://pillow.readthedocs.io/en/stable/", target="_blank">Python Imaging Library (PIL)</a> and
@@ -902,8 +904,7 @@ def vertex_array_buffer_objs_for_unit_cube() -> tuple[int, int, int]:
                         <li>returns the texture object's ID.</li>
                     </ul>
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 from pathlib import Path
 from PIL import Image
 
@@ -930,8 +931,8 @@ def load_texture(file_path: str) -> int:
     glGenerateMipmap(GL_TEXTURE_2D)
 
     img.close()
-    return texture_id</code>
-                </pre>
+    return texture_id</code></pre>
+                <br>
                 <p>
                     We have yet to handle sending uniform data to the GPU to be used by our vertex and fragment shaders. This next utility function handles sending
                     a 4x4 matrix to the GPU, which we will use to send our model, view and projection matrices. This function takes as input the shader program ID,
