@@ -935,14 +935,13 @@ def load_texture(file_path: str) -> int:
                 <br>
                 <p>
                     We have yet to handle sending uniform data to the GPU to be used by our vertex and fragment shaders. This next utility function handles sending
-                    a 4x4 matrix to the GPU, which we will use to send our model, view and projection matrices. This function takes as input the shader program ID,
+                    a 4x4 matrix to the GPU, which we will use for our model, view and projection matrices. This function takes as input the shader program ID,
                     the name of the uniform variable (as defined in the shader code) and the matrix as a Numpy array. We first check that the matrix is 4x4, then
                     query OpenGL for the location of the uniform variable in the shader program, before assigning the matrix data to the uniform variable using
-                    the `glUniformMatrix4fv` function (which takes the uniform location, the number of matrices to send, a boolean indicating if the matrix should
-                    be transposed, and a pointer to the matrix data). If the uniform was not found, this function raises an exception.
+                    the <code>glUniformMatrix4fv</code> function (which takes the uniform location, the number of matrices to send, a boolean indicating if the
+                    matrix should be transposed, and a pointer to the matrix data). If the uniform was not found, this function raises an exception.
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 import glm
 import numpy as np
 import numpy.typing as npt
@@ -953,62 +952,59 @@ def send_matrix_to_shader(program_id: int, uniform_name: str, matrix: npt.NDArra
     uniform_location = glGetUniformLocation(program_id, uniform_name)
     if uniform_location == -1:
         raise RuntimeError(f"Failed to locate uniform: {uniform_name}")
-    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm.value_ptr(glm.mat4(matrix)))</code>
-                </pre>
+    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm.value_ptr(glm.mat4(matrix)))</code></pre>
+                <br>
                 <p>
                     Next up, we define a utility function that sets the "texture unit" of each sampler uniform in the shader program. Texture units allow us to
                     use multiple textures in a shader program (even though in this application, we only use one), by assigning each sampler uniform a unique
                     texture unit that we activate before binding a texture to it. This function takes the shader program ID and an ordered list of sampler uniform
-                    names as input. It calls `glUseProgram` to activate our shader program, then iterates through each uniform name, querying OpenGL for the
-                    location of the uniform in the shader program and assigning the next free texture unit (starting with 0) to it.
+                    names as input. It calls <code>glUseProgram</code> to activate our shader program, then iterates through each uniform name, querying OpenGL
+                    for the location of the uniform in the shader program and assigning the next free texture unit (starting with 0) to it.
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 
 
 def shader_program_set_sampler_texture_units(program_id: int, sampler_names: list[str]):
     glUseProgram(program_id)
     for unit, sampler_name in enumerate(sampler_names):
-        glUniform1i(glGetUniformLocation(program_id, sampler_name), unit)</code>
-                </pre>
+        glUniform1i(glGetUniformLocation(program_id, sampler_name), unit)</code></pre>
+                <br>
                 <p>
                     We now define a utility function that binds texture objects to texture units. Given an ordered list of the application's texture object IDs
                     (ordered by texture unit as set by the previous function), for each texture unit, this function activates the texture unit and then calls
-                    `glBindTexture` with the corresponding texture object ID, which binds that texture object to the texture unit, which will allow the fragment
-                    shader to sample the texture from that texture unit's uniform sampler.
+                    <code>glBindTexture</code> with the corresponding texture object ID, which binds that texture object to the texture unit, which will allow
+                    the fragment shader to sample the texture from that texture unit's uniform sampler.
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 
 
 def bind_textures_to_texture_units(texture_ids: list[int]):
     assert len(texture_ids) <= 16, "Only up to 16 texture units are supported"
     for unit, texture_id in enumerate(texture_ids):
         glActiveTexture(GL_TEXTURE0 + unit)
-        glBindTexture(GL_TEXTURE_2D, texture_id)</code>
-                </pre>
+        glBindTexture(GL_TEXTURE_2D, texture_id)</code></pre>
+                <br>
                 <p>
-                    In this tutorial we will handle only a single user input: the escape key. To do this, we define a `process_input` function which is called at
-                    the beginning of the main loop. We use pyGLFW's `get_key` function to check if the escape key is currently being pressed, and if it is, we
-                    set GLFW's `window_should_close` flag to `True`, which will cause the main loop to exit before the next iteration.
+                    In this tutorial we will handle only a single user input: the escape key. To do this, we define a <code>process_input</code> function which
+                    is called at the beginning of the main rendering loop. We use GLFW's <code>get_key</code> function to check if the escape key is currently
+                    being pressed, and if it is, we set GLFW's <code>window_should_close</code> flag to <code>True</code>, which will cause the main loop to exit
+                    before the next iteration.
                 </p>
-                <pre>
-                    <code class="language-python">import glfw
+                <pre><code class="language-python">import glfw
 
 
 def process_input(window: glfw._GLFWwindow) -> None:
     if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
-        glfw.set_window_should_close(window, True)</code>
-                </pre>
+        glfw.set_window_should_close(window, True)</code></pre>
+                <br>
                 <p>
                     This next utility function clears the screen with a background colour and activates our shader program, and should be called immediately after
-                    the above `process_input` function. It receives the shader program ID and the background colour as input, calls `glClearColor` to set the
-                    background colour, which is then used when `glClear` is called. We tell OpenGL to clear both the colour and depth buffers (such that any trace
-                    of the previous frame is removed), Finally, we activate our shader program, as following this function, the main program will be setting
-                    uniforms and drawing geometry.
+                    the above <code>process_input</code> function in the main rendering loop. It receives the shader program ID and the background colour as input,
+                    calls <code>glClearColor</code> to set the background colour, which is then used when <code>glClear</code> is called. We tell OpenGL to clear both
+                    the colour and depth buffers (such that any trace of the previous frame is removed), Finally, we activate our shader program, as following
+                    this function, the main program will be setting uniforms and drawing geometry.
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 
 
 def clear_screen_before_render(
@@ -1016,38 +1012,35 @@ def clear_screen_before_render(
 ):
     glClearColor(*background_colour)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glUseProgram(program_id)</code>
-                </pre>
+    glUseProgram(program_id)</code></pre>
+                <br>
                 <p>
                     We have already defined functions to set uniforms for matrices and texture units, so it remains to implement a function that actually renders
                     the unit cube. This function takes the VAO ID and the number of vertices as input, and starts by binding the VAO to the current OpenGL context.
-                    We then call `glDrawArrays` which, using the currently active shader program, the previously configured vertex attributes and the vertex data
-                    in the VBO (which was indirectly bound by binding the VAO), draws the cube's triangles to the screen. We simply pass the primitive type
-                    `GL_TRIANGLES`, the initial vertex index (0) and the number of vertices to draw.
+                    We then call <code>glDrawArrays</code> which, using the currently active shader program, the previously configured vertex attributes and the
+                    vertex data in the VBO (which was indirectly bound by binding the VAO), draws the cube's triangles to the screen. We simply pass the primitive
+                    type <code>GL_TRIANGLES</code>, the initial vertex index (0) and the number of vertices to draw.
                 </p>
-                <pre>
-                    <code class="language-python">from OpenGL.GL import *
+                <pre><code class="language-python">from OpenGL.GL import *
 
 
 def render_triangles(vao_id: int, num_vertices: int):
     glBindVertexArray(vao_id)
-    glDrawArrays(GL_TRIANGLES, 0, num_vertices)</code>
-                </pre>
+    glDrawArrays(GL_TRIANGLES, 0, num_vertices)</code></pre>
+                <br>
                 <p>
                     The final utility function we will implement is one that runs after the main loop has exited, but before the program terminates. this function
-                    is responsible for deleting the vertex array object and vertex buffer object that we created for the unit cube, before terminating the GLFW
-                    library.
+                    is responsible for deleting the vertex array and buffer objects that we created for the unit cube, before terminating the GLFW library.
                 </p>
-                <pre>
-                    <code class="language-python">import glfw
+                <pre><code class="language-python">import glfw
 from OpenGL.GL import *
 
 
 def terminate(vao_id: int, vbo_id: int):
     glDeleteVertexArrays(1, (vao_id,))
     glDeleteBuffers(1, (vbo_id,))
-    glfw.terminate()</code>
-                </pre>
+    glfw.terminate()</code></pre>
+                <br>
                 <p>
                     Finally, we can put all of these utility functions to use in our main program, which will render a rotating, textured cube. This main program
                     has two main sections: the first of these is the initialisation section, where we set up the window, shader program, vertex array and buffer
@@ -1056,17 +1049,17 @@ def terminate(vao_id: int, vbo_id: int):
                     to the GPU via their respective uniforms, and finally render the cube.
                 </p>
                 <p>
-                    Following the rendering, we call GLFW's `swap_buffers` function. To understand what this does, we first need to understand that OpenGL uses
-                    "double buffering": the front colour buffer (a large 2D buffer storing the colour of each pixel in the window) contains the image currently
-                    being displayed, whilst our rendering commands write to the back buffer. After we are finished rendering, calling `swap_buffers` swaps the back
-                    buffer to the front buffer which displays the new image in an instant. If OpenGL used a single buffer for rendering, the user might see
-                    intermediate rendering steps, flickering or artifacts on the screen. We also call `poll_events` which checks for input events (keyboard or mouse),
-                    which we then handle at the beginning of the next iteration of the main loop. This loop is terminated when GLFW's `window_should_close` function
-                    returns True, which we set in the `process_input` function when the escape key is pressed. Finally, we call our `terminate` utility function to
-                    clean up some of our OpenGL objects before actually terminating the program.
+                    Following the rendering, we call GLFW's <code>swap_buffers</code> function. To understand what this does, we first need to understand that
+                    OpenGL uses "double buffering": the front colour buffer (a large 2D buffer storing the colour of each pixel in the window) contains the image
+                    currently being displayed, whilst our rendering commands write to the back buffer. After we are finished rendering, calling
+                    <code>swap_buffers</code> swaps the back buffer to the front buffer which displays the new image in an instant. If OpenGL used a single buffer
+                    for rendering, the user might see intermediate rendering steps, flickering or artifacts on the screen. We also call <code>poll_events</code>
+                    which checks for input events (keyboard or mouse), which we then handle at the beginning of the next iteration of the main loop. This loop is
+                    terminated when GLFW's <code>window_should_close</code> function returns <code>True</code>, which we control in the <code>process_input</code>
+                    function when the escape key is pressed. Finally, we call our <code>terminate</code> utility function to clean up some of our OpenGL objects
+                    before actually terminating the program.
                 </p>
-                <pre>
-                    <code class="language-python">import glfw
+                <pre><code class="language-python">import glfw
 from utils import *
 
 
@@ -1122,8 +1115,8 @@ while not glfw.window_should_close(window):
     glfw.swap_buffers(window)
     glfw.poll_events()
 
-terminate(vao_id, vbo_id)</code>
-                </pre>
+terminate(vao_id, vbo_id)</code></pre>
+                <br>
                 <p>
                     TODO: screenshot of resulting window
                 </p>
