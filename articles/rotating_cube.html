@@ -952,7 +952,8 @@ def send_matrix_to_shader(program_id: int, uniform_name: str, matrix: npt.NDArra
     uniform_location = glGetUniformLocation(program_id, uniform_name)
     if uniform_location == -1:
         raise RuntimeError(f"Failed to locate uniform: {uniform_name}")
-    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm.value_ptr(glm.mat4(matrix)))</code></pre>
+    matrix = glm.mat4(matrix)
+    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm.value_ptr(matrix))</code></pre>
                 <br>
                 <p>
                     Next up, we define a utility function that sets the "texture unit" of each sampler uniform in the shader program. Texture units allow us to
@@ -1093,9 +1094,8 @@ while not glfw.window_should_close(window):
     bind_textures_to_texture_units(texture_ids=[texture_id])
 
     model = model_matrix(
-        rot_x_rad=glfw.get_time(),
-        rot_y_rad=glfw.get_time() / 2,
-        rot_z_rad=glfw.get_time() / 3
+        rot_x_rad=0.67 * glfw.get_time(),
+        rot_y_rad=glfw.get_time()
     )
     send_matrix_to_shader(shader_program_id, "model", model)
 
@@ -1118,8 +1118,22 @@ while not glfw.window_should_close(window):
 terminate(vao_id, vbo_id)</code></pre>
                 <br>
                 <p>
-                    TODO: screenshot of resulting window
+                    To run this demonstration on a Linux machine, you will need to create a directory containing the following files:
+                    <ul>
+                        <li><code>main.py</code> containing the above main program code;</li>
+                        <li><code>utils.py</code> containing all of the utility functions defined in this article;</li>
+                        <li><code>vertex_shader.vs</code> containing the vertex shader code;</li>
+                        <li><code>fragment_shader.fs</code> containing the fragment shader code; and</li>
+                        <li><code>texture.jpg</code> containing a texture image.</li>
+                    </ul>
                 </p>
+                <p>
+                    You will also need install the latest versions of the following pip packages into a Python environment: <code>numpy</code>,
+                    <code>PyOpenGL</code>, <code>PyGLM</code>, <code>glfw</code> and <code>pillow</code>. To run the program, simply execute
+                    <code>python3 main.py</code> after activating your Python environment, and you will see a new window open displaying a
+                    rotating, textured cube.
+                </p>
+                <img src="../images/rotating_cube_window.png" alt="Window created by running this program which displays a rotating cube." class="padded-img">
 
                 <h3>References</h3>
                 <ol id="references">
