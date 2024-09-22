@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Single-pass, exponentially decayed sum and mean in Python</title>
+        <meta charset="utf-8" />
+        <meta name="description" content="A derivation of single-pass algorithms to compute the EWMS and EWMA of an array, and a Python implementation using Numba.">
+        <meta name="author" content="Ethan Mitchell">
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <link rel="shortcut icon" type="image/png" href="../images/e.png"/>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+
+        <link rel="stylesheet" href="../style.css?version=6">
+    </head>
+    <body>
+        <div id="wrapper">
+
+            <!-- Title-->
+            <section class="article-title">
+                <h1>Single-pass, exponentially decayed sum and mean in Python</h1>
+                <p class="major">September 2024</p>
+                <a id="home-button" href="../index.html">&lt;&nbsp;&nbsp;Home</a>
+            </section>
+
+            <!-- Content -->
+            <section class="article-body">
+                <h3>Context</h3>
+                <p>
+                    Given a floating-point array $\boldsymbol{x} \in \mathbb{R}^n$ and a corresponding array of integer epoch timestamps
+                    $\boldsymbol{t} \in \mathbb{Z}^n$, we can compute an exponentially weighted/decayed moving sum (EWMS) or moving average
+                    (EWMA) of $\boldsymbol{x}$ using a single-pass algorithm. These are common time series operations useful for "smoothing"
+                    noisy observations or isolating trends in data; and the single-pass algorithms implemented in this article are performant
+                    for large datasets and can be applied to live data streams without needing to store previous observations in memory.
+                </p>
+
+                <h3>EWMS Derivation</h3>
+                <p>TODO</p>
+
+                <h3>EWMS Implementation</h3>
+                <p>TODO</p>
+
+                <h3>EWMA Derivation</h3>
+                <p>TODO</p>
+
+                <h3>EWMA Implementation</h3>
+                <p>TODO</p>
+            </section>
+
+            <!-- Footer -->
+            <footer>
+                <div class="inner">
+                    <p style="margin-bottom: 5px;">Copyright &copy; Ethan Mitchell 2024</p>
+                    <p style="margin-bottom: 5px;">ethanmitchell98@gmail.com</p>
+                </div>
+            </footer>
+
+        </div>
+    </body>
+
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/glsl.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+</html>
