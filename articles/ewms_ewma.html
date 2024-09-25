@@ -31,21 +31,73 @@
             <section class="article-body">
                 <h3>Context</h3>
                 <p>
-                    Given a floating-point array $\boldsymbol{x} \in \mathbb{R}^n$ and a corresponding array of integer epoch timestamps
-                    $\boldsymbol{t} \in \mathbb{Z}^n$, we can compute an exponentially weighted/decayed moving sum (EWMS) or moving average
-                    (EWMA) of $\boldsymbol{x}$ using a single-pass algorithm. These are common time series operations useful for "smoothing"
-                    noisy observations or isolating trends in data; and the single-pass algorithms implemented in this article are performant
-                    for large datasets and can be applied to live data streams without needing to store previous observations in memory.
+                    Given a floating-point array $\boldsymbol{x} \in \mathbb{R}^N$ and a corresponding array of non-decreasing, integer, epoch
+                    timestamps $\boldsymbol{t} \in \mathbb{Z}^N$, we can compute an exponentially weighted/decayed moving sum (EWMS) or moving
+                    average (EWMA) of $\boldsymbol{x}$ using a single-pass algorithm. These are common time series operations useful for
+                    "smoothing" noisy observations or isolating trends in data; and the single-pass algorithms implemented in this article are
+                    performant for large datasets and can be applied to live data streams without needing to store previous observations in memory.
                 </p>
 
                 <h3>EWMS Derivation</h3>
-                <p>TODO</p>
+                <p>
+                    Given an elapsed time of $t$ seconds and a half life of $\tau$ seconds, the exponential decay factor is defined as
+                    $$\alpha \> = \> 2^{-\frac{t}{\tau}} \in (0,1],$$
+                    which equals 1 when $t = 0$ (no decay has occurred), equals $\frac{1}{2}$ when $t = \tau$ (hence the name half life), and
+                    approaches 0 as $t \rightarrow \infty$. Hence, for some index $n \in [1, N]$, the exponentially weighted moving sum of the
+                    first $n$ observations of $\boldsymbol{x}$ with half life $\tau$ is
+                    $$\rho_n \> = \> \sum_{i=1}^n w_{i,n} x_i$$
+                    with decay weights
+                    $$w_{i,n} \> = \> 2^{-\frac{t_n - t_i}{\tau}}.$$
+                </p>
+                <p>
+                    To define a recurrence relation for $\rho_n$ in terms of $\rho_{n-1}$, see that
+                    $$\begin{aligned}
+                        \rho_n \> &= \> \sum_{i=1}^n w_{i,n} x_i \\
+                        &= \> w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i \\
+                        &= \> 2^{-\frac{t_n - t_n}{\tau}} x_n + \sum_{i=1}^{n-1} 2^{-\frac{t_n - t_i}{\tau}} x_i \\
+                        &= \> 2^{-\frac{0}{\tau}} x_n + \sum_{i=1}^{n-1} 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}} x_i \\
+                        &= \> x_n + \sum_{i=1}^{n-1} 2^{\left( - \frac{t_n - t_{n-1}}{\tau} - \frac{t_{n-1} - t_i}{\tau}\right)} x_i \\
+                        &= \> x_n + \sum_{i=1}^{n-1} 2^{-\frac{t_n - t_{n-1}}{\tau}} 2^{-\frac{t_{n-1} - t_i}{\tau}} x_i \\
+                        &= \> x_n + 2^{-\frac{t_n - t_{n-1}}{\tau}} \sum_{i=1}^{n-1} 2^{-\frac{t_{n-1} - t_i}{\tau}} x_i \\
+                        &= \> x_n + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1} x_i \\
+                        &= \> x_n + \alpha_n \rho_{n-1},
+                    \end{aligned}$$
+                    where $\alpha_n$ is the decay factor given the elapsed time $t_n - t_{n-1}$ seconds from the $n^{\text{th}}$ to the
+                    $(n-1)^{\text{th}}$ observation.
+                </p>
 
                 <h3>EWMS Implementation</h3>
                 <p>TODO</p>
 
                 <h3>EWMA Derivation</h3>
-                <p>TODO</p>
+                <p>
+                    For some index $n \in [1, N]$, the exponentially weighted moving average of the first $n$ observations of $\boldsymbol{x}$ with
+                    half life $\tau$ is
+                    $$\mu_n \> = \> \frac{\rho_n}{W_n} \> = \> \frac{\sum_{i=1}^n w_{i,n} x_i}{\sum_{i=1}^n w_{i,n}},$$
+                    with the weight sum (using the same decay weights as the EWMS)
+                    $$W_n \> = \> \sum_{i=1}^n w_{i,n} \> = \> \sum_{i=1}^n 2^{-\frac{t_n - t_i}{\tau}}.$$
+                    Put simply, the EWMA of a sequence is the EWMS divided by the sum of the decay weights.
+                </p>
+                <p>
+                    Similarly to the EWMS derivation, in order to find a recurrence relation for $\mu_n$ in terms of $\mu_{n-1}$, start with the
+                    definition
+                    $$\begin{aligned}
+                        \mu_n \> &= \> \frac{\sum_{i=1}^n w_{i,n} x_i}{\sum_{i=1}^n w_{i,n}} \\
+                        &= \> \frac{w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i}{w_{n,n} + \sum_{i=1}^{n-1} w_{i,n}} \\
+                        &= \> \frac{x_n + \sum_{i=1}^{n-1} 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}} x_i}
+                            {1 + \sum_{i=1}^{n-1} 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}}} \\
+                        &= \> \frac{x_n + 2^{-\frac{t_n - t_{n-1}}{\tau}} \sum_{i=1}^{n-1} 2^{-\frac{t_{n-1} - t_i}{\tau}} x_i}
+                            {1 + 2^{-\frac{t_n - t_{n-1}}{\tau}} \sum_{i=1}^{n-1} 2^{-\frac{t_{n-1} - t_i}{\tau}}} \\
+                        &= \> \frac{x_n + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1} x_i}{1 + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1}} \\
+                        &= \> \frac{x_n + \alpha_n \rho_{n-1}}{1 + \alpha_n W_{n-1}} \\
+                        &= \> \frac{x_n + \alpha_n W_{n-1} \mu_{n-1}}{1 + \alpha_n W_{n-1}} \\
+                        &= \> \frac{x_n + (W_n - 1) \mu_{n-1}}{W_n},
+                    \end{aligned}$$
+                    which implies that the weight sum update rule is
+                    $$W_n \> = \> 1 + \alpha_n W_{n-1},$$
+                    following which the EWMA $\mu_n$ can be determined using the previous EWMA $\mu_{n-1}$, the weight sum $W_n$ and the current
+                    observation $x_n$.
+                </p>
 
                 <h3>EWMA Implementation</h3>
                 <p>TODO</p>
