@@ -38,36 +38,52 @@
                     performant for large datasets and can be applied to live data streams without needing to store previous observations in memory.
                 </p>
 
-                <h3>EWMS Derivation</h3>
+                <h3>EWMS Definition</h3>
                 <p>
                     Given an elapsed time of $t$ seconds and a half life of $\tau$ seconds, the exponential decay factor is defined as
                     $$\alpha \> = \> 2^{-\frac{t}{\tau}} \in (0,1],$$
                     which equals 1 when $t = 0$ (no decay has occurred), equals $\frac{1}{2}$ when $t = \tau$ (hence the name half life), and
-                    approaches 0 as $t \rightarrow \infty$. Hence, for some index $n \in [1, N]$, the exponentially weighted moving sum of the
-                    first $n$ observations of $\boldsymbol{x}$ with half life $\tau$ is
+                    approaches 0 as $t \rightarrow \infty$. Hence, for some index $n \in [1, N]$, the exponentially weighted sum of the first
+                    $n$ observations of $\boldsymbol{x}$ with half life $\tau$ is
                     $$\rho_n \> = \> \sum_{i=1}^n w_{i,n} x_i$$
                     with decay weights
                     $$w_{i,n} \> = \> 2^{-\frac{t_n - t_i}{\tau}}.$$
+                    The exponentially weighted moving sum of $\boldsymbol{x}$ is the array $\boldsymbol{\rho} \in \mathbb{R}^n$ of these weighted
+                    sums. For example, if $x_n$ counts the occurrences of some event at timestep $t_n$, then the EWMS represents a moving tally of
+                    "recent" occurrences of this event, where occurrences further in the past are weighted less.
                 </p>
+
+                <h3>EWMS Algorithm Derivation</h3>
                 <p>
-                    To define a recurrence relation for $\rho_n$ in terms of $\rho_{n-1}$, see that
+                    To define a recurrence relation for $\rho_n$, start by isolating the $n^{\text{th}}$ term from the sum, so
+                    $$\rho_n \> = \> \sum_{i=1}^n w_{i,n} x_i \> = \> w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i.$$
+                    Using the definition of the decay weight, notice that
+                    $$w_{n,n} \> = \> 2^{-\frac{t_n - t_n}{\tau}} \> = \> 2^{-\frac{0}{\tau}} \> = \> 1,$$
+                    and the other weights
                     $$\begin{aligned}
-                        \rho_n \> &= \> \sum_{i=1}^n w_{i,n} x_i \\
-                        &= \> w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i \\
-                        &= \> 2^{-\frac{t_n - t_n}{\tau}} x_n + \sum_{i=1}^{n-1} 2^{-\frac{t_n - t_i}{\tau}} x_i \\
-                        &= \> 2^{-\frac{0}{\tau}} x_n + \sum_{i=1}^{n-1} 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}} x_i \\
-                        &= \> x_n + \sum_{i=1}^{n-1} 2^{\left( - \frac{t_n - t_{n-1}}{\tau} - \frac{t_{n-1} - t_i}{\tau}\right)} x_i \\
-                        &= \> x_n + \sum_{i=1}^{n-1} 2^{-\frac{t_n - t_{n-1}}{\tau}} 2^{-\frac{t_{n-1} - t_i}{\tau}} x_i \\
-                        &= \> x_n + 2^{-\frac{t_n - t_{n-1}}{\tau}} \sum_{i=1}^{n-1} 2^{-\frac{t_{n-1} - t_i}{\tau}} x_i \\
+                        w_{i,n} \> &= \> 2^{-\frac{t_n - t_i}{\tau}} \\
+                        &= \> 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}} \\
+                        &= \> 2^{\left( - \frac{t_n - t_{n-1}}{\tau} - \frac{t_{n-1} - t_i}{\tau}\right)} \\
+                        &= \> 2^{-\frac{t_n - t_{n-1}}{\tau}} 2^{-\frac{t_{n-1} - t_i}{\tau}} \\
+                        &= \> \alpha_n w_{i,n-1},
+                    \end{aligned}$$
+                    where $\alpha_n$ is the decay factor given the elapsed time $t_n - t_{n-1}$ seconds from the $n^{\text{th}}$ to the
+                    $(n-1)^{\text{th}}$ observation. Substituting these weight equivalences back into the expanded definition of $\rho_n$ gives
+                    $$\begin{aligned}
+                        \rho_n \> &= \> w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i \\
+                        &= \> x_n + \sum_{i=1}^{n-1} \alpha_n w_{i,n-1} x_i \\
                         &= \> x_n + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1} x_i \\
                         &= \> x_n + \alpha_n \rho_{n-1},
                     \end{aligned}$$
-                    where $\alpha_n$ is the decay factor given the elapsed time $t_n - t_{n-1}$ seconds from the $n^{\text{th}}$ to the
-                    $(n-1)^{\text{th}}$ observation.
+                    meaning $\rho_n$ can be computed given the previous EWMS $\rho_{n-1}$, the decay factor $\alpha_n$ and the $n^{\text{th}}$
+                    observation $x_n$.
                 </p>
 
                 <h3>EWMS Implementation</h3>
-                <p>TODO</p>
+                <p>
+                    TODO
+                    https://nyu-cds.github.io/python-numba/02-signatures/#:~:text=It%20is%20also%20possible%20to,able%20to%20accept%20other%20types.
+                </p>
 
                 <h3>EWMA Derivation</h3>
                 <p>
