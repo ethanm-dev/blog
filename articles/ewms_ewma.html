@@ -59,7 +59,8 @@
                     $$\rho_n \> = \> \sum_{i=1}^n w_{i,n} x_i \> = \> w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i.$$
                     Using the definition of the decay weight, notice that
                     $$w_{n,n} \> = \> 2^{-\frac{t_n - t_n}{\tau}} \> = \> 2^{-\frac{0}{\tau}} \> = \> 1,$$
-                    and the other weights
+                    which makes sense, because the $n^{\text{th}}$ observation has just occurred and hence should not be decayed. Now, for
+                    the other weights,
                     $$\begin{aligned}
                         w_{i,n} \> &= \> 2^{-\frac{t_n - t_i}{\tau}} \\
                         &= \> 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}} \\
@@ -67,23 +68,73 @@
                         &= \> 2^{-\frac{t_n - t_{n-1}}{\tau}} 2^{-\frac{t_{n-1} - t_i}{\tau}} \\
                         &= \> \alpha_n w_{i,n-1},
                     \end{aligned}$$
-                    where $\alpha_n$ is the decay factor given the elapsed time $t_n - t_{n-1}$ seconds from the $n^{\text{th}}$ to the
-                    $(n-1)^{\text{th}}$ observation. Substituting these weight equivalences back into the expanded definition of $\rho_n$ gives
+                    where $\alpha_n$ is the decay factor given the elapsed time $t_n - t_{n-1}$ seconds from the $(n-1)^{\text{th}}$ to the
+                    $n^{\text{th}}$ observation. Substituting these weight equivalences back into the expanded definition of $\rho_n$ gives
                     $$\begin{aligned}
                         \rho_n \> &= \> w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i \\
                         &= \> x_n + \sum_{i=1}^{n-1} \alpha_n w_{i,n-1} x_i \\
                         &= \> x_n + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1} x_i \\
                         &= \> x_n + \alpha_n \rho_{n-1},
                     \end{aligned}$$
-                    meaning $\rho_n$ can be computed given the previous EWMS $\rho_{n-1}$, the decay factor $\alpha_n$ and the $n^{\text{th}}$
-                    observation $x_n$.
+                    for $n$ > 1, meaning $\rho_n$ can be computed given the previous EWMS $\rho_{n-1}$, the decay factor $\alpha_n$ and the
+                    $n^{\text{th}}$ observation $x_n$. This recurrence relation is initialised by simply setting $\rho_1 = x_1$.
                 </p>
 
                 <h3>EWMS Implementation</h3>
                 <p>
-                    TODO
-                    https://nyu-cds.github.io/python-numba/02-signatures/#:~:text=It%20is%20also%20possible%20to,able%20to%20accept%20other%20types.
+                    The recurrence relation derived above provides the basis for computing the EWMS of an array with a single-pass algorithm.
+                    To achieve the best performance (i.e., the fastest runtime) for large datasets, we will utilise
+                    <a href="https://numba.pydata.org/" target="_blank">Numba</a>, a Python library that translates decorated functions into
+                    optimised machine code at runtime. This allows a programmer to benefit from the simplicity of Python syntax whilst still
+                    achieving C-like performance. The other library we will use is
+                    <a href="https://numpy.org/doc/stable/user/whatisnumpy.html" target="_blank">Numpy</a>, which is Python's most popular
+                    numerical computing library that provides a powerful array data type and a wide range of mathematical functions. Numba
+                    supports a subset of in-built Python & Numpy functionality that is more than sufficient for writing our EWMS algorithm,
+                    which is shown below:
                 </p>
+                <pre><code class="language-python">@njit(float64[:](int64[:], float64[:], int64, float64))
+def np_ewms(time_s, values, half_life_s, min_nonzero_ewms):
+    ewms_array = np.full(len(time_s), np.nan, dtype="float64")
+    ewms = 0.0
+
+    for i in range(len(time_s)):
+        if abs(ewms) <= min_nonzero_ewms:
+            ewms = 0.0
+        elif time_s[i] - time_s[i - 1] > 0:
+            ewms *= np.exp(-np.log(2) * (time_s[i] - time_s[i - 1]) / half_life_s)
+
+        if not np.isnan(values[i]) and values[i] != 0:
+            ewms += values[i]
+
+        ewms_array[i] = ewms
+
+    return ewms_array</code></pre>
+                <br>
+                <p>
+                    The <code>@njit</code> decorator indicates that the function should be compiled "just in time" using Numba's JIT compiler,
+                    and it specifies the input and output types of the function (this is not necessary, but does speed up compilation as Numba
+                    doesn't need to infer these types). This function takes four arguments:
+                </p>
+                <ul>
+                    <li><code>time_s (int64[:])</code> - a non-decreasing array of observation timestamps in seconds since the epoch,</li>
+                    <li><code>values (float64[:])</code> - an array of floating point observation values,</li>
+                    <li><code>half_life_s (int64)</code> - the half life of exponential decay in seconds, and</li>
+                    <li>
+                        <code>min_nonzero_ewms (float64)</code> - the value below which the EWMS is considered zero, which avoids unnecessary
+                        decay computation for negligible sums.
+                    </li>
+                </ul>
+                <p>
+                    The floating point EWMS array is initialised with <code>NaN</code> values, and the current EWMS is initialised as zero. Iterating
+                    through the input arrays, the function either sends a negligible EWMS to zero or decays the previous EWMS, multiplying it by
+                    $\alpha_n$ = <code>np.exp(-np.log(2) * (time_s[i] - time_s[i - 1]) / half_life_s)</code>, which is faster to compute than
+                    <code>np.power(2, -(time_s[i] - time_s[i - 1]) / half_life_s)</code>. If the current observation is not missing or zero, it is
+                    added to the EWMS before this value is stored in the output array, which is returned by the function upon termination of the
+                    loop.
+                </p>
+
+                <h3>EWMS Results</h3>
+                <p>TODO</p>
 
                 <h3>EWMA Derivation</h3>
                 <p>
@@ -116,6 +167,9 @@
                 </p>
 
                 <h3>EWMA Implementation</h3>
+                <p>TODO</p>
+
+                <h3>EWMA Results</h3>
                 <p>TODO</p>
             </section>
 
