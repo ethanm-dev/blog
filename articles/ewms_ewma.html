@@ -134,7 +134,47 @@ def np_ewms(time_s, values, half_life_s, min_nonzero_ewms):
                 </p>
 
                 <h3>EWMS Results</h3>
-                <p>TODO</p>
+                <p>
+                    To verify that the EWMS algorithm works and visualise its output, we will generate some synthetic data and produce a plot
+                    showing $\boldsymbol{\rho}$ and $\boldsymbol{x}$. To run this on your own machine, you will need to install the latest
+                    versions of the following pip packages into a Python environment (e.g., <code>virtualenv</code> or <code>conda</code>):
+                    <code>numpy</code>, <code>Numba</code>, <code>Pandas</code> and <code>matplotlib</code>. We start by using Numpy to generate
+                    random observations alongside consecutive timestamps (both as Numpy arrays):
+                </p>
+                <pre><code class="language-python">import numpy as np
+
+N = 100
+x_array = np.random.choice([1.0, 0.0], N, p=[0.5, 0.5]) * np.random.randint(low=1, high=10, size=N)
+time_s_array = np.arange(N)
+tau_s = 5</code></pre>
+                <br>
+                <p>
+                    We imagine that each element of <code>x_array</code> counts the occurrences of some event at the corresponding timestamp in
+                    <code>time_s_array</code>. This data can then be passed as input to our EWMS function, with the output saved to a new array:
+                </p>
+                <pre><code class="language-python">ewms_array = np_ewms(time_s=time_s_array, values=x_array, half_life_s=tau_s, min_nonzero_ewms=1e-6)</code></pre>
+                <br>
+                <p>
+                    We can assemble a Pandas dataframe from these Numpy arrays and use the <code>pandas.DataFrame.plot</code> function as a
+                    shortcut to produce a matplotlib plot of the EWMS as a line graph superimposed on a bar chart of the original observations:
+                </p>
+                <pre><code class="language-python">import pandas as pd
+from matplotlib import pyplot as plt
+
+df = pd.DataFrame({"time_s": time_s_array, "x": x_array, "ewms": ewms_array}).set_index("time_s")
+df["x"].plot(kind="bar", width=1)
+df["ewms"].plot(color="green")
+
+plt.xticks(np.arange(N, step=10))
+plt.legend(["EWMS", "x"])
+
+plt.show()</code></pre>
+                <br>
+                <p>
+                    This code snippet will produce a plot like the one shown below, which demonstrates how the EWMS decays exponentially in the absence
+                    of new observations and increases instantaneously when a new observation is recorded.
+                </p>
+                <img src="../images/ewms_plot.png" alt="A bar chart of input observations alongside the computed EWMS line." class="padded-img">
 
                 <h3>EWMA Definition</h3>
                 <p>
@@ -200,7 +240,7 @@ def np_ewma(time_s, values, half_life_s):
                 w_sum += 1.0
                 ewma_array[n] = (values[n] + (w_sum - 1.0) * ewma_array[n - 1]) / w_sum
             prev_time_s = time_s[n]
-        elif i > 0:
+        elif n > 0:
             ewma_array[n] = ewma_array[n - 1]
 
     return ewma_array</code></pre>
