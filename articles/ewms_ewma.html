@@ -43,7 +43,7 @@
                     Given an elapsed time of $t$ seconds and a half life of $\tau$ seconds, the exponential decay factor is defined as
                     $$\alpha \> = \> 2^{-\frac{t}{\tau}} \in (0,1],$$
                     which equals 1 when $t = 0$ (no decay has occurred), equals $\frac{1}{2}$ when $t = \tau$ (hence the name half life), and
-                    approaches 0 as $t \rightarrow \infty$. Hence, for some index $n \in [1, N]$, the exponentially weighted sum of the first
+                    approaches $0$ as $t \rightarrow \infty$. Hence, for some index $n \in [1, N]$, the exponentially weighted sum of the first
                     $n$ observations of $\boldsymbol{x}$ with half life $\tau$ is
                     $$\rho_n \> = \> \sum_{i=1}^n w_{i,n} x_i$$
                     with decay weights
@@ -60,7 +60,7 @@
                     Using the definition of the decay weight, notice that
                     $$w_{n,n} \> = \> 2^{-\frac{t_n - t_n}{\tau}} \> = \> 2^{-\frac{0}{\tau}} \> = \> 1,$$
                     which makes sense, because the $n^{\text{th}}$ observation has just occurred and hence should not be decayed. Now, for
-                    the other weights,
+                    the other weights (where $1 \leq i \leq n-1$),
                     $$\begin{aligned}
                         w_{i,n} \> &= \> 2^{-\frac{t_n - t_i}{\tau}} \\
                         &= \> 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}} \\
@@ -97,16 +97,16 @@ def np_ewms(time_s, values, half_life_s, min_nonzero_ewms):
     ewms_array = np.full(len(time_s), np.nan, dtype="float64")
     ewms = 0.0
 
-    for i in range(len(time_s)):
+    for n in range(len(time_s)):
         if abs(ewms) <= min_nonzero_ewms:
             ewms = 0.0
-        elif time_s[i] - time_s[i - 1] > 0:
-            ewms *= np.exp(-np.log(2) * (time_s[i] - time_s[i - 1]) / half_life_s)
+        elif time_s[n] - time_s[n - 1] > 0:
+            ewms *= np.exp(-np.log(2) * (time_s[n] - time_s[n - 1]) / half_life_s)
 
-        if not np.isnan(values[i]) and values[i] != 0:
-            ewms += values[i]
+        if not np.isnan(values[n]) and values[n] != 0:
+            ewms += values[n]
 
-        ewms_array[i] = ewms
+        ewms_array[n] = ewms
 
     return ewms_array</code></pre>
                 <br>
@@ -127,8 +127,8 @@ def np_ewms(time_s, values, half_life_s, min_nonzero_ewms):
                 <p>
                     The floating point EWMS array is initialised with <code>NaN</code> values, and the current EWMS is initialised as zero. Iterating
                     through the input arrays, the function either sends a negligible EWMS to zero or decays the previous EWMS, multiplying it by
-                    $\alpha_n$ = <code>np.exp(-np.log(2) * (time_s[i] - time_s[i - 1]) / half_life_s)</code>, which is faster to compute than
-                    <code>np.power(2, -(time_s[i] - time_s[i - 1]) / half_life_s)</code>. If the current observation is not missing or zero, it is
+                    $\alpha_n$ = <code>np.exp(-np.log(2) * (time_s[n] - time_s[n - 1]) / half_life_s)</code>, which is faster to compute than
+                    <code>np.power(2, -(time_s[n] - time_s[n - 1]) / half_life_s)</code>. If the current observation is not missing or zero, it is
                     added to the EWMS before this value is stored in the output array, which is returned by the function upon termination of the
                     loop.
                 </p>
@@ -136,38 +136,94 @@ def np_ewms(time_s, values, half_life_s, min_nonzero_ewms):
                 <h3>EWMS Results</h3>
                 <p>TODO</p>
 
+                <h3>EWMA Definition</h3>
+                <p>
+                    The exponentially weighted average of the first $n$ observations of $\boldsymbol{x}$ with half life $\tau$ is equal to the
+                    exponentially weighted sum divided by the sum of the decay weights $W_n$, so
+                    $$\mu_n \> = \> \frac{\rho_n}{W_n} \> = \> \frac{\sum_{i=1}^n w_{i,n} x_i}{\sum_{i=1}^n w_{i,n}},$$
+                    with the same decay weights
+                    $$w_{i,n} \> = \> 2^{-\frac{t_n - t_i}{\tau}}.$$
+                    The exponentially weighted moving average of $\boldsymbol{x}$ is the array $\boldsymbol{\mu} \in \mathbb{R}^n$ of these
+                    weighted averages. For example, if $x_n$ records the value of some signal at timestep $t_n$, then the EWMA represents a
+                    smoothed history of the signal with outliers and noise reduced, where signal values further in the past contribute to the
+                    moving average less.
+                </p>
+
                 <h3>EWMA Derivation</h3>
                 <p>
-                    For some index $n \in [1, N]$, the exponentially weighted moving average of the first $n$ observations of $\boldsymbol{x}$ with
-                    half life $\tau$ is
-                    $$\mu_n \> = \> \frac{\rho_n}{W_n} \> = \> \frac{\sum_{i=1}^n w_{i,n} x_i}{\sum_{i=1}^n w_{i,n}},$$
-                    with the weight sum (using the same decay weights as the EWMS)
-                    $$W_n \> = \> \sum_{i=1}^n w_{i,n} \> = \> \sum_{i=1}^n 2^{-\frac{t_n - t_i}{\tau}}.$$
-                    Put simply, the EWMA of a sequence is the EWMS divided by the sum of the decay weights.
-                </p>
-                <p>
-                    Similarly to the EWMS derivation, in order to find a recurrence relation for $\mu_n$ in terms of $\mu_{n-1}$, start with the
-                    definition
+                    In the EWMS derivation, it was demonstrated that $w_{n,n} = 1$ and for $1 \leq i \leq n-1$,
+                    $$w_{i,n} \> = \> \alpha_n w_{i,n-1}$$
+                    where
+                    $$\alpha_n \> = \> 2^{-\frac{t_n - t_{n-1}}{\tau}}.$$
+                    Substituting these equivalences into the definition of the weight sum gives
                     $$\begin{aligned}
-                        \mu_n \> &= \> \frac{\sum_{i=1}^n w_{i,n} x_i}{\sum_{i=1}^n w_{i,n}} \\
-                        &= \> \frac{w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i}{w_{n,n} + \sum_{i=1}^{n-1} w_{i,n}} \\
-                        &= \> \frac{x_n + \sum_{i=1}^{n-1} 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}} x_i}
-                            {1 + \sum_{i=1}^{n-1} 2^{-\frac{(t_n - t_{n-1}) + (t_{n-1} - t_i)}{\tau}}} \\
-                        &= \> \frac{x_n + 2^{-\frac{t_n - t_{n-1}}{\tau}} \sum_{i=1}^{n-1} 2^{-\frac{t_{n-1} - t_i}{\tau}} x_i}
-                            {1 + 2^{-\frac{t_n - t_{n-1}}{\tau}} \sum_{i=1}^{n-1} 2^{-\frac{t_{n-1} - t_i}{\tau}}} \\
-                        &= \> \frac{x_n + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1} x_i}{1 + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1}} \\
-                        &= \> \frac{x_n + \alpha_n \rho_{n-1}}{1 + \alpha_n W_{n-1}} \\
-                        &= \> \frac{x_n + \alpha_n W_{n-1} \mu_{n-1}}{1 + \alpha_n W_{n-1}} \\
+                        W_n \> &= \> \sum_{i=1}^n w_{i,n} \\
+                        &= \> w_{n,n} + \sum_{i=1}^{n-1} w_{i,n} \\
+                        &= \> 1 + \sum_{i=1}^{n-1} \alpha_n w_{i,n-1} \\
+                        &= \> 1 + \alpha_n \sum_{i=1}^{n-1} w_{i,n-1} \\
+                        &= \> 1 + \alpha_n W_{n-1},
+                    \end{aligned}$$
+                    which is a recurrence relation for $W_n$ in terms of the previous weight sum $W_{n-1}$, that is initialised by setting
+                    $W_1 = 1$. Now, to derive a recurrence relation for $\mu_n$ in terms of $\mu_{n-1}$, recall the relation that was found for
+                    the EWMS,
+                    $$\rho_n \> = \> x_n + \alpha_n \rho_{n-1}.$$
+                    Substituting this into the definition of the EWMA gives
+                    $$\begin{aligned}
+                        \mu_n \> &= \> \frac{\rho_n}{W_n} \\
+                        &= \> \frac{x_n + \alpha_n \rho_{n-1}}{W_n} \\
+                        &= \> \frac{x_n + \alpha_n W_{n-1} \mu_{n-1}}{W_n}, \\
                         &= \> \frac{x_n + (W_n - 1) \mu_{n-1}}{W_n},
                     \end{aligned}$$
-                    which implies that the weight sum update rule is
-                    $$W_n \> = \> 1 + \alpha_n W_{n-1},$$
-                    following which the EWMA $\mu_n$ can be determined using the previous EWMA $\mu_{n-1}$, the weight sum $W_n$ and the current
-                    observation $x_n$.
+                    meaning the EWMA $\mu_n$ can be computed from the previous EWMA $\mu_{n-1}$, the updated weight sum $W_n$ and the current
+                    observation $x_n$. This update rule also demonstrates that the $\mu_n$ is a weighted average of $x_n$ and $\mu_{n-1}$,
+                    where the weight of $x_n$ is $1$ and the weight of $\mu_{n-1}$ is $W_n - 1$. The EWMA is initialised by setting $\mu_1 = x_1$.
                 </p>
 
                 <h3>EWMA Implementation</h3>
-                <p>TODO</p>
+                <p>
+                    The pair of recurrence relations that we just derived form the basis of a single-pass algorithm for computing the EWMA of
+                    an array. This algorithm, which is also implemented in Python using Numpy and Numba, is shown below:
+                </p>
+                <pre><code class="language-python">@njit(float64[:](int64[:], float64[:], int64))
+def np_ewma(time_s, values, half_life_s):
+    ewma_array = np.full(len(time_s), np.nan, dtype="float64")
+    w_sum = 0.0
+    prev_time_s = -1
+
+    for n in range(len(time_s)):
+        if not np.isnan(values[n]):
+            if prev_time_s == -1:
+                w_sum = 1.0
+                ewma_array[n] = values[n]
+            else:
+                w_sum *= np.exp(-np.log(2) * (time_s[n] - prev_time_s) / half_life_s)
+                w_sum += 1.0
+                ewma_array[n] = (values[n] + (w_sum - 1.0) * ewma_array[n - 1]) / w_sum
+            prev_time_s = time_s[n]
+        elif i > 0:
+            ewma_array[n] = ewma_array[n - 1]
+
+    return ewma_array</code></pre>
+                <br>
+                <p>
+                    This function takes three arguments:
+                </p>
+                <ul>
+                    <li><code>time_s (int64[:])</code> - a non-decreasing array of observation timestamps in seconds since the epoch,</li>
+                    <li><code>values (float64[:])</code> - an array of floating point observation values, and</li>
+                    <li><code>half_life_s (int64)</code> - the half life of exponential decay in seconds.
+                    </li>
+                </ul>
+                <p>
+                    The floating point EWMA array is initialised with <code>NaN</code> values, the weight sum is set to zero and the
+                    previous observation timestamp is set to a default value of $-1$. Iterating through the input arrays, if the $n^{\text{th}}$
+                    observation is missing (i.e., it is <code>NaN</code>), the previous EWMA is rolled forwards to the current timestep (because
+                    there is no new observation to mutate the average). Otherwise, if this is the first valid observation, the weight sum is
+                    initialised as $1$ and the EWMA is set as this first observation. For subsequent observations, the weight sum is first updated
+                    by multiplying it by the decay factor $\alpha_n$ and adding $1$, before the EWMA is updated using its recurrence relation
+                    derived above. Finally, the current timestamp is stored for use in the next EWMA update. At the termination of the loop, the
+                    EWMA array is returned by the function.
+                </p>
 
                 <h3>EWMA Results</h3>
                 <p>TODO</p>
