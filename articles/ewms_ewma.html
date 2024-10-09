@@ -23,7 +23,7 @@
             <!-- Title-->
             <section class="article-title">
                 <h1>Single-pass, exponentially decayed sum and mean in Python</h1>
-                <p class="major">September 2024</p>
+                <p class="major">October 2024</p>
                 <a id="home-button" href="../index.html">&lt;&nbsp;&nbsp;Home</a>
             </section>
 
@@ -42,9 +42,9 @@
                 <p>
                     Given an elapsed time of $t$ seconds and a half life of $\tau$ seconds, the exponential decay factor is defined as
                     $$\alpha \> = \> 2^{-\frac{t}{\tau}} \in (0,1],$$
-                    which equals 1 when $t = 0$ (no decay has occurred), equals $\frac{1}{2}$ when $t = \tau$ (hence the name half life), and
+                    which equals $1$ when $t = 0$ (no decay has occurred), equals $\frac{1}{2}$ when $t = \tau$ (hence the name half life), and
                     approaches $0$ as $t \rightarrow \infty$. Hence, for some index $n \in [1, N]$, the exponentially weighted sum of the first
-                    $n$ observations of $\boldsymbol{x}$ with half life $\tau$ is
+                    $n$ observations of the array $\boldsymbol{x}$ with timestamps $\boldsymbol{t}$ and half life $\tau$ is
                     $$\rho_n \> = \> \sum_{i=1}^n w_{i,n} x_i$$
                     with decay weights
                     $$w_{i,n} \> = \> 2^{-\frac{t_n - t_i}{\tau}}.$$
@@ -57,7 +57,7 @@
                 <p>
                     To define a recurrence relation for $\rho_n$, start by isolating the $n^{\text{th}}$ term from the sum, so
                     $$\rho_n \> = \> \sum_{i=1}^n w_{i,n} x_i \> = \> w_{n,n} x_n + \sum_{i=1}^{n-1} w_{i,n} x_i.$$
-                    Using the definition of the decay weight, notice that
+                    Using the definition of the decay weights, notice that
                     $$w_{n,n} \> = \> 2^{-\frac{t_n - t_n}{\tau}} \> = \> 2^{-\frac{0}{\tau}} \> = \> 1,$$
                     which makes sense, because the $n^{\text{th}}$ observation has just occurred and hence should not be decayed. Now, for
                     the other weights (where $1 \leq i \leq n-1$),
@@ -88,11 +88,15 @@
                     optimised machine code at runtime. This allows a programmer to benefit from the simplicity of Python syntax whilst still
                     achieving C-like performance. The other library we will use is
                     <a href="https://numpy.org/doc/stable/user/whatisnumpy.html" target="_blank">Numpy</a>, which is Python's most popular
-                    numerical computing library that provides a powerful array data type and a wide range of mathematical functions. Numba
-                    supports a subset of in-built Python & Numpy functionality that is more than sufficient for writing our EWMS algorithm,
+                    numerical computing library which provides a powerful array data type as well as a wide range of mathematical functions.
+                    Numba supports a subset of in-built Python & Numpy functionality that is more than sufficient for writing our EWMS algorithm,
                     which is shown below:
                 </p>
-                <pre><code class="language-python">@njit(float64[:](int64[:], float64[:], int64, float64))
+                <pre><code class="language-python">from numba import njit, float64, int64
+import numpy as np
+
+
+@njit(float64[:](int64[:], float64[:], int64, float64))
 def np_ewms(time_s, values, half_life_s, min_nonzero_ewms):
     ewms_array = np.full(len(time_s), np.nan, dtype="float64")
     ewms = 0.0
@@ -112,7 +116,7 @@ def np_ewms(time_s, values, half_life_s, min_nonzero_ewms):
                 <br>
                 <p>
                     The <code>@njit</code> decorator indicates that the function should be compiled "just in time" using Numba's JIT compiler,
-                    and it specifies the input and output types of the function (this is not necessary, but does speed up compilation as Numba
+                    and it specifies the input and output types of the function (this is not necessary, but it does speed up compilation as Numba
                     doesn't need to infer these types). This function takes four arguments:
                 </p>
                 <ul>
@@ -178,10 +182,10 @@ plt.show()</code></pre>
 
                 <h3>EWMA Definition</h3>
                 <p>
-                    The exponentially weighted average of the first $n$ observations of $\boldsymbol{x}$ with half life $\tau$ is equal to the
-                    exponentially weighted sum divided by the sum of the decay weights $W_n$, so
+                    The exponentially weighted average of the first $n$ observations of $\boldsymbol{x}$ with timestamps $\boldsymbol{t}$ and
+                    half life $\tau$ is equal to the exponentially weighted sum divided by the sum of the decay weights $W_n$, so
                     $$\mu_n \> = \> \frac{\rho_n}{W_n} \> = \> \frac{\sum_{i=1}^n w_{i,n} x_i}{\sum_{i=1}^n w_{i,n}},$$
-                    with the same decay weights
+                    with the same decay weights that were used in the EWMS,
                     $$w_{i,n} \> = \> 2^{-\frac{t_n - t_i}{\tau}}.$$
                     The exponentially weighted moving average of $\boldsymbol{x}$ is the array $\boldsymbol{\mu} \in \mathbb{R}^n$ of these
                     weighted averages. For example, if $x_n$ records the value of some signal at timestep $t_n$, then the EWMA represents a
@@ -205,7 +209,7 @@ plt.show()</code></pre>
                     \end{aligned}$$
                     which is a recurrence relation for $W_n$ in terms of the previous weight sum $W_{n-1}$, that is initialised by setting
                     $W_1 = 1$. Now, to derive a recurrence relation for $\mu_n$ in terms of $\mu_{n-1}$, recall the relation that was found for
-                    the EWMS,
+                    the EWMS:
                     $$\rho_n \> = \> x_n + \alpha_n \rho_{n-1}.$$
                     Substituting this into the definition of the EWMA gives
                     $$\begin{aligned}
@@ -215,7 +219,7 @@ plt.show()</code></pre>
                         &= \> \frac{x_n + (W_n - 1) \mu_{n-1}}{W_n},
                     \end{aligned}$$
                     meaning the EWMA $\mu_n$ can be computed from the previous EWMA $\mu_{n-1}$, the updated weight sum $W_n$ and the current
-                    observation $x_n$. This update rule also demonstrates that the $\mu_n$ is a weighted average of $x_n$ and $\mu_{n-1}$,
+                    observation $x_n$. This update rule also demonstrates that $\mu_n$ is a weighted average of $x_n$ and $\mu_{n-1}$,
                     where the weight of $x_n$ is $1$ and the weight of $\mu_{n-1}$ is $W_n - 1$. The EWMA is initialised by setting $\mu_1 = x_1$.
                 </p>
 
@@ -224,7 +228,11 @@ plt.show()</code></pre>
                     The pair of recurrence relations that we just derived form the basis of a single-pass algorithm for computing the EWMA of
                     an array. This algorithm, which is also implemented in Python using Numpy and Numba, is shown below:
                 </p>
-                <pre><code class="language-python">@njit(float64[:](int64[:], float64[:], int64))
+                <pre><code class="language-python">from numba import njit, float64, int64
+import numpy as np
+                    
+                    
+@njit(float64[:](int64[:], float64[:], int64))
 def np_ewma(time_s, values, half_life_s):
     ewma_array = np.full(len(time_s), np.nan, dtype="float64")
     w_sum = 0.0
@@ -258,11 +266,11 @@ def np_ewma(time_s, values, half_life_s):
                     The floating point EWMA array is initialised with <code>NaN</code> values, the weight sum is set to zero and the
                     previous observation timestamp is set to a default value of $-1$. Iterating through the input arrays, if the $n^{\text{th}}$
                     observation is missing (i.e., it is <code>NaN</code>), the previous EWMA is rolled forwards to the current timestep (because
-                    there is no new observation to mutate the average). Otherwise, if this is the first valid observation, the weight sum is
-                    initialised as $1$ and the EWMA is set as this first observation. For subsequent observations, the weight sum is first updated
-                    by multiplying it by the decay factor $\alpha_n$ and adding $1$, before the EWMA is updated using its recurrence relation
-                    derived above. Finally, the current timestamp is stored for use in the next EWMA update. At the termination of the loop, the
-                    EWMA array is returned by the function.
+                    there is no new observation to mutate the average - but note that <code>prev_time_s</code> is not updated in this case).
+                    Otherwise, if this is the first valid observation, the weight sum is initialised as $1$ and the EWMA is set as this first
+                    observation. For subsequent observations, the weight sum is first updated by multiplying it by the decay factor $\alpha_n$
+                    and adding $1$, before the EWMA is updated using its recurrence relation derived above. Finally, the current timestamp is
+                    stored for use in the next EWMA update. At the termination of the loop, the EWMA array is returned by the function.
                 </p>
 
                 <h3>EWMA Results</h3>
@@ -308,10 +316,11 @@ df.plot()
                 <br>
                 <p>
                     The resulting plot will look similar to the one shown below, which demonstrates that different half lives produce different results
-                    (with their validity depending on the application). In our example, the 5 second half life is overfit to the noisy signal - it follows
-                    the input very closely but quite a bit of the input noise is preserved (because the short half life means short deviations from the true
-                    signal can quickly dominate the average as older observations are decayed very quickly). The longer half life is a lot smoother, but
-                    lags quite a bit behind the input signal, as it takes longer for the average to adjust to meaningful changes in the input data.
+                    (with their validity depending on the application). In our example, the 5 second half life EWMA is overfit to the noisy signal - it
+                    follows the input very closely but quite a bit of the input noise is preserved (because the short half life means short deviations
+                    from the true signal can quickly dominate the average as older observations are decayed very quickly). The longer half life EWMA is
+                    a lot smoother, but lags quite a bit behind the input signal, as it takes longer for the average to adjust to meaningful changes in
+                    the input data.
                 </p>
                 <img src="../images/ewma_plot.png" alt="Line graphs of a noisy signal alongside its EWMA." class="padded-img">
 
