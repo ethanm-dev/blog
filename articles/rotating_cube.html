@@ -15,19 +15,17 @@
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
 
-        <link rel="stylesheet" href="../style.css?version=6">
+        <link rel="stylesheet" href="../style.css?version=7">
     </head>
     <body>
-        <div id="wrapper">
+        <div id="container">
+            <a id="home-link" href="../index.html">
+                <div id="header">&lt; Ethan Mitchell</div>
+            </a>
 
-            <!-- Title-->
-            <section class="article-title">
-                <h1>Rotating cube from scratch with PyOpenGL</h1>
-                <p class="major">August 2024</p>
-                <a id="home-button" href="../index.html">&lt;&nbsp;&nbsp;Home</a>
-            </section>
+            <p id="title">Rotating cube from scratch with PyOpenGL</p>
+            <p id="publish">August 2024</p>
 
-            <!-- Content -->
             <section class="article-body">
                 <h3>Context</h3>
                 <p>
@@ -201,7 +199,9 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                     radians, and consider how the other two basis vectors $\boldsymbol{i}$ and $\boldsymbol{j}$ are transformed to vectors
                     $\boldsymbol{i}^{\prime}$ and $\boldsymbol{j}^{\prime}$ respectively.
                 </p>
-                <img src="../images/rotating_cube_rotation.png" alt="Diagram of 3D standard basis vectors i and j rotated about k." class="padded-img">
+                <div class="image">
+                    <img src="../images/rotating_cube_rotation.png" alt="Diagram of 3D standard basis vectors i and j rotated about k." style="max-width: 750px;">
+                </div>
                 <p>
                     We can form a right-angled triangle in the first quadrant of the $xy$-plane with $\boldsymbol{i}^{\prime}$ as
                     the hypotenuse, its $x$-component the adjacent side and its $y$-component the opposite side. The hypotenuse has
@@ -453,7 +453,9 @@ def scale_matrix(s_x: float, s_y: float, s_z: float) -> npt.NDArray:
                         </li>
                     </ul>
                 </p>
-                <img src="../images/rotating_cube_frustum.png" alt="Diagram of rectangular frustum in camera space." class="padded-img">
+                <div class="image">
+                    <img src="../images/rotating_cube_frustum.png" alt="Diagram of rectangular frustum in camera space." style="max-width: 600px;">
+                </div>
                 <p>
                     To derive the perspective projection matrix, let's forget about clip space for a moment and instead consider
                     the whole transformation from camera space to NDC (i.e., from the frustum to the $[-1,1]$ cube). We will
@@ -1135,7 +1137,9 @@ terminate(vao_id, vbo_id)</code></pre>
                     <code>python3 main.py</code> after activating your Python environment, and you will see a new window open displaying a
                     rotating, textured cube.
                 </p>
-                <img src="../images/rotating_cube_window.png" alt="Window created by running this program which displays a rotating cube." class="padded-img">
+                <div class="image">
+                    <img src="../images/rotating_cube_window.png" alt="Window created by running this program which displays a rotating cube." style="max-width: 600px;">
+                </div>
 
                 <h3>References</h3>
                 <ol id="references">
@@ -1165,14 +1169,6 @@ terminate(vao_id, vbo_id)</code></pre>
                     article & code will be noted here.
                 </p>
             </section>
-
-            <!-- Footer -->
-            <footer>
-                <div class="inner">
-                    <p style="margin-bottom: 5px;">Copyright &copy; Ethan Mitchell 2024</p>
-                    <p style="margin-bottom: 5px;">ethanmitchell98@gmail.com</p>
-                </div>
-            </footer>
 
         </div>
     </body>

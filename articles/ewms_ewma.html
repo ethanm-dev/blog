@@ -15,19 +15,17 @@
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
 
-        <link rel="stylesheet" href="../style.css?version=6">
+        <link rel="stylesheet" href="../style.css?version=7">
     </head>
     <body>
-        <div id="wrapper">
+        <div id="container">
+            <a id="home-link" href="../index.html">
+                <div id="header">&lt; Ethan Mitchell</div>
+            </a>
 
-            <!-- Title-->
-            <section class="article-title">
-                <h1>Single-pass, exponentially decayed sum and mean in Python</h1>
-                <p class="major">October 2024</p>
-                <a id="home-button" href="../index.html">&lt;&nbsp;&nbsp;Home</a>
-            </section>
+            <p id="title">Single-pass, exponentially decayed sum and mean in Python</p>
+            <p id="publish">October 2024</p>
 
-            <!-- Content -->
             <section class="article-body">
                 <h3>Context</h3>
                 <p>
@@ -178,7 +176,9 @@ plt.show()</code></pre>
                     This code snippet will produce a plot like the one shown below, which demonstrates how the EWMS decays exponentially in the absence
                     of new observations and increases instantaneously when a new observation is recorded.
                 </p>
-                <img src="../images/ewms_plot.png" alt="A bar chart of input observations alongside the computed EWMS line." class="padded-img">
+                <div class="image">
+                    <img src="../images/ewms_plot.png" alt="A bar chart of input observations alongside the computed EWMS line." style="max-width: 600px;">
+                </div>
 
                 <h3>EWMA Definition</h3>
                 <p>
@@ -322,7 +322,9 @@ df.plot()
                     a lot smoother, but lags quite a bit behind the input signal, as it takes longer for the average to adjust to meaningful changes in
                     the input data.
                 </p>
-                <img src="../images/ewma_plot.png" alt="Line graphs of a noisy signal alongside its EWMA." class="padded-img">
+                <div class="image">
+                    <img src="../images/ewma_plot.png" alt="Line graphs of a noisy signal alongside its EWMA." style="max-width: 600px;">
+                </div>
 
                 <h3>References</h3>
                 <ol id="references">
@@ -337,13 +339,7 @@ df.plot()
                 </p>
             </section>
 
-            <!-- Footer -->
-            <footer>
-                <div class="inner">
-                    <p style="margin-bottom: 5px;">Copyright &copy; Ethan Mitchell 2024</p>
-                    <p style="margin-bottom: 5px;">ethanmitchell98@gmail.com</p>
-                </div>
-            </footer>
+            <!-- TODO: footer -->
 
         </div>
     </body>
