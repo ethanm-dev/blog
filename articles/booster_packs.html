@@ -64,6 +64,12 @@
                                         = 1 - 0.8 * 0.8
                                         = 0.36
 
+                Q: what is the expected number of rare (foil or non-foil) cards in a booster pack?
+                A: E[rare cards] = \sum_{n=1}^{N} P(card n is rare)
+                                 = \sum_{n=1}^{N} (p_nR + p_nFR)
+                                 = 0.2 + 0.2 + 0.8 + 0.8
+                                 = 2
+
                 Q: if I open B booster packs, what is the probability of pulling at least one copy of a particular card I want?
                 A: lets say the particular card in question is a non-foil rare card and B=12
                    when we open B booster packs, we sample from each card slot B times (bc all packs are homogeneous and independent)
@@ -76,9 +82,18 @@
                                                               = 1 - [0.992 * 0.992 * 0.968 * 0.984]^12
                                                               ~= 0.54
 
+                Q: how many booster packs do I need to open to be >= 50% sure I will open a particular card?
+                A: given what we derived in the above answer, and this time let's say the card is a mythic (non-foil or foil) and let B be the number of booster packs
+                   P(open at least one of particular card) = 1 - [\prod_{n=1}^{N} (1 - p_nM / S_M - p_nFM / S_FM)]^B
+                                                    => 0.5 =< 1 - [(1 - 0.2/10) * (1 - 0.1/10 - 0.1/10)]^B
+                                                       0.5 =< 1 - [0.98 * 0.98]^B
+                                                       0.5 =< 1 - [0.9604]^B
+                                               => 0.9604^B >= 0.5
+                                                      => B >= log(0.5) / log(0.9604) ~= 17.15
+                   hence you need to open 18 booster packs to be 50% sure you will open at least one copy of the mythic card
+
                 questions TODO:
                 - if I open N booster packs, what is the probability of getting at least one of the cards I want?
-                - how many booster packs do I need to open to be >= 50% sure I will open a particular card?
                 - how many booster packs do I need to open to be >= 50% sure I will open at least one of the cards I want?
                 - how many booster packs do I need to open to be >= 50% sure I will open every rare in the set?
                 -->
