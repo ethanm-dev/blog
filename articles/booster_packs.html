@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Statistics of finding desired cards in TCG booster packs</title>
+        <meta charset="utf-8" />
+        <meta name="description" content="An explanation of the statistics behind opening trading card booster packs, and a JavaScript tool to calculate the likelihood of opening desired cards.">
+        <meta name="author" content="Ethan Mitchell">
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <link rel="shortcut icon" type="image/png" href="../images/e.png"/>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+
+        <link rel="stylesheet" href="../style.css?version=8">
+    </head>
+    <body>
+        <div id="container">
+            <a id="home-link" href="../index.html">
+                <div id="header">&lt; Ethan Mitchell</div>
+            </a>
+
+            <p id="title">Statistics of finding desired cards in TCG booster packs</p>
+            <p id="publish">January 2025</p>
+
+            <section class="article-body">
+                <h3>Context</h3>
+                <p>TODO</p>
+
+                <!--
+                https://math.stackexchange.com/questions/3161373/probability-of-certain-rarities-in-a-trading-card-game-booster-box
+
+                describing a theoretical TCG set card rarities & variants and their total counts:
+                - common (C) with S_C = 100 cards
+                - uncommon (U) with S_U = 50 cards
+                - rare (R) with S_R = 25 cards
+                - mythic (M) with S_M = 10 cards
+                - foil rare (FR) with S_FR = 25 cards
+                - foil mythic (FM) with S_FM = 10 cards
+
+                describing the card odds for each slot in a booster pack:
+                - card 1: 100% common
+                - card 2: 100% common
+                - card 3: 100% common
+                - card 4: 100% common
+                - card 5: 80% common 20% rare
+                - card 6: 100% uncommon
+                - card 7: 100% uncommon
+                - card 8: 80% uncommon 20% rare
+                - card 9: 80% rare 20% mythic
+                - card 10: 40% rare 10% mythic 40% foil rare 10% foil mythic
+                call these probabilities P(card n is rarity r) = p_nr (imagine a N x R matrix of these probabilities)
+                so for example, p_9c = 0, p_9u = 0, p_9r = 0.8 and p_9m = 0.2
+                assume no booster box guarantees or special rules about duplicates
+
+                Q: what is the probability of getting at least 1 mythic (foil or non-foil) in a booster pack?
+                A: P(at least 1 mythic) = 1 - P(no mythics)
+                                        = 1 - \prod_{n=1}^{N} P(card n is not mythic)
+                                        = 1 - \prod_{n=1}^{N} (1 - p_nM - p_nFM)
+                                        = 1 - (1 - p_9M) * (1 - p_10M - p_10FM)
+                                        = 1 - 0.8 * 0.8
+                                        = 0.36
+
+                Q: if I open B booster packs, what is the probability of pulling at least one copy of a particular card I want?
+                A: lets say the particular card in question is a non-foil rare card and B=12
+                   when we open B booster packs, we sample from each card slot B times (bc all packs are homogeneous and independent)
+                   => P(open at least one of particular card) = 1 - P(open no copies of particular card)
+                                                              = 1 - P(open no copies of particular card from a booster pack)^B
+                                                              = 1 - [\prod_{n=1}^{N} P(card n is not particular card)]^B
+                                                              = 1 - [\prod_{n=1}^{N} (1 - P(card n is particular card))]^B
+                                                              = 1 - [\prod_{n=1}^{N} (1 - p_nR / S_R)]^B
+                                                              = 1 - [(1 - 0.2/25) * (1 - 0.2/25) * (1 - 0.8/25) * (1 - 0.4/25)]^12
+                                                              = 1 - [0.992 * 0.992 * 0.968 * 0.984]^12
+                                                              ~= 0.54
+
+                questions TODO:
+                - if I open N booster packs, what is the probability of getting at least one of the cards I want?
+                - how many booster packs do I need to open to be >= 50% sure I will open a particular card?
+                - how many booster packs do I need to open to be >= 50% sure I will open at least one of the cards I want?
+                - how many booster packs do I need to open to be >= 50% sure I will open every rare in the set?
+                -->
+
+                <h3>References</h3>
+                <ol id="references">
+                    <!-- TODO -->
+                </ol>
+                <p>
+                    If you have any corrections or questions - please send me an email and we can have a discussion. Any
+                    edits or additions to the original article & code will be noted here.
+                </p>
+            </section>
+
+            <div class="footer">
+                <p>Copyright &copy; Ethan Mitchell 2025</p>
+                <p>ethanmitchell98@gmail.com</p>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/glsl.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+</html>
