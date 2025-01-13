@@ -94,20 +94,26 @@
                                                      = 1 - [(1 - 3*0.2/25) * (1 - 3*0.2/25) * (1 - 3*0.8/25 - 3*0.2/10) * (1 - 3*0.4/25 - 3*0.1/10 - 3*0.4/25 - 3*0.1/10)]^6
                                                      = 1 - [0.976 * 0.976 * 0.844 * 0.844]^6
                                                      ~= 0.9
-                
-                Q: how many booster packs do I need to open to be >= 50% sure I will open a particular card?
-                A: given what we derived in the above answer, and this time let's say the card is a mythic (non-foil or foil) and let B be the number of booster packs
-                   P(open at least one of particular card) = 1 - [\prod_{n=1}^{N} (1 - p_nM / S_M - p_nFM / S_FM)]^B
-                                                    => 0.5 =< 1 - [(1 - 0.2/10) * (1 - 0.1/10 - 0.1/10)]^B
-                                                       0.5 =< 1 - [0.98 * 0.98]^B
-                                                       0.5 =< 1 - [0.9604]^B
-                                               => 0.9604^B >= 0.5
-                                                      => B >= log(0.5) / log(0.9604) ~= 17.15
-                   hence you need to open 18 booster packs to be 50% sure you will open at least one copy of the mythic card
 
-                questions TODO:
-                - how many booster packs do I need to open to be >= 50% sure I will open at least one of the cards I want? (TODO: just skip above Q and morph answer to this Q)
-                - how many booster packs do I need to open to be >= 50% sure I will open every rare in the set?
+                Q: how many booster packs do I need to open to be >= 50% sure I will open at least one of the cards I want?
+                A: given what we derived in the above answer, lets say we want 3 foil or non-foil rares and 2 foil or non-foil mythics and let B be the number of booster packs
+                   P(open at least one desired card) = 1 - [\prod_{n=1}^{N} (1 - \sum_{r \in |R} d_r p_nr / S_r)]^B
+                                              => 0.5 <= 1 - [(1 - 3*0.2/25) * (1 - 3*0.2/25) * (1 - 3*0.8/25 - 3*0.2/10) * (1 - 3*0.4/25 - 3*0.1/10 - 3*0.4/25 - 3*0.1/10)]^B
+                                                     = 1 - [0.976 * 0.976 * 0.844 * 0.844]^B
+                                                     ~= 1 - 0.6786^B
+                                         => 0.6786^B >= 0.5
+                                                => B >= log(0.5) / log(0.6786) ~= 1.78
+                    hence you need to open 3 booster packs to be 50% sure you will open at least one of the desired cards
+
+                Q: how many booster packs do I need to open to be >= 90% sure I will open every rare in the set?
+                A: we previously derived that E[rare cards] = 2 per booster pack
+                   hence the expected number of rare cards from opening B booster packs is 2B
+                   the number of ways to choose 2B cards from the set of S_R = S_FR rare cards is S_R^2B
+                   how many of these sequences contain every rare card at least once? S_R! * S(2B, S_R) where S(n, k) is the Stirling number of the second kind
+                   hence the probability of opening every rare card at least once is S_R! * S(2B, S_R) / S_R^2B
+                   = [\sum_{i=0}^{S_R} (-1)^i * S_R_C_i * (S_R - i)^2B] / S_R^2B
+                   = \sum_{i=0}^{S_R} (-1)^i * S_R_C_i * [(S_R - i) / S_R]^2B
+                   this can't be simplified to make B the subject, but we can use a binary search to find the minimum B such that the probability is >= 0.9
                 -->
 
                 <h3>References</h3>
