@@ -50,10 +50,33 @@
 
                 <h3>Mathematical model</h3>
                 <p>
-                    Let $\mathbb{R}$ be the set of all card rarities present in the booster pack, and for a given rarity $r \in \mathbb{R}$,
-                    let $S_r$ be number of cards of that rarity in the set (from which the booster pack is sampled). For example,
-
-                    TODO: booster pack slots next
+                    Let $\mathcal{R}$ be the set of all card rarities present in the booster pack, and for a given rarity $r \in \mathcal{R}$,
+                    let $S_r$ be number of cards of that rarity in the set (from which the booster pack is sampled). For example, consider
+                    the <a href="https://sorcerytcg.com/sets/alpha">Alpha Edition of Sorcery: Contested Realm</a>. Using the
+                    <a href="https://curiosa.io/cards">card search page</a> on their website, we find that the set contains (excluding
+                    avatar cards) the rarities:
+                </p>
+                <ul>
+                    <li>common with $S_C = 101$,</li>
+                    <li>exceptional with $S_X = 128$,</li>
+                    <li>elite with $S_E = 98$,</li>
+                    <li>unique with $S_U = 66$ and</li>
+                    <li>foil variants of each of the above rarities, with $S_{FC} = S_C$, $S_{FX} = S_X$, $S_{FE} = S_E$ and $S_{FU} = S_U$.</li>
+                </ul>
+                <p>
+                    Let $N$ be the number of cards in a booster pack, and for any $n \in \{1, \ldots, N\}$ and $r \in \mathcal{R}$, let $p_{nr}$
+                    denote the probability that card $n$ in the pack is of rarity $r$. If we assume that there are no special rules about booster
+                    box guarantees or duplicate cards in packs (i.e., each booster pack card slot is sampled independently), then the
+                    $N \times |\mathcal{R}|$ matrix $\boldsymbol{P}$ of these probabilities (along with the rarity set counts $S_r$) uniquely
+                    defines the booster pack.
+                </p>
+                <div class="image">
+                    <img src="../images/sorcery_booster.png" alt="The contents of a Sorcery TCG booster pack." style="max-width: 700px;">
+                </div>
+                <p>
+                    Continuing the Sorcery example, using the above image and a 
+                    https://www.collectorarthouse.com/collectors-corner/alpha-set-data
+                    https://therealisticcollector.com/2023/09/05/sorcery-contested-realm-tcg-complete-print-run-numbers-and-pull-rates/
                 </p>
 
                 <h3>Likelihood of opening a desired card from multiple booster packs</h3>
