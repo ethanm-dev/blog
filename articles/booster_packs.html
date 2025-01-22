@@ -50,37 +50,46 @@
 
                 <h3>Mathematical model</h3>
                 <p>
-                    Let $\mathcal{R}$ be the set of all card rarities present in the booster pack, and for a given rarity $r \in \mathcal{R}$,
-                    let $S_r$ be number of cards of that rarity in the set (from which the booster pack is sampled). For example, consider
-                    the <a href="https://sorcerytcg.com/sets/alpha">Alpha Edition of Sorcery: Contested Realm</a>. Using the
-                    <a href="https://curiosa.io/cards">card search page</a> on their website, we find that the set contains (excluding
-                    avatar cards) the rarities:
+                    Let $\mathcal{C}$ be the set of all cards we could possibly find in the booster pack, and let $\mathcal{R}$ be the set of
+                    all card rarities present in \mathbb{C}. For a given rarity $r \in \mathcal{R}$, let $S_r$ be number of cards of that
+                    rarity in $\mathcal{C}$, such that
+                    $$\sum_{r \in \mathcal{R}} S_r \> = \> |\mathcal{C}|.$$
+                    It is important that we count variants of the same card (e.g., a foil version) as separate cards in $\mathcal{C}$ if they
+                    have different likelihoods of being found in the booster pack. Imagine a hypothetical TCG booster pack whose card set
+                    $\mathcal{C}$ contains the rarities:
                 </p>
                 <ul>
-                    <li>common with $S_C = 101$,</li>
-                    <li>exceptional with $S_X = 128$,</li>
-                    <li>elite with $S_E = 98$,</li>
-                    <li>unique with $S_U = 66$ and</li>
-                    <li>foil variants of each of the above rarities, with $S_{FC} = S_C$, $S_{FX} = S_X$, $S_{FE} = S_E$ and $S_{FU} = S_U$.</li>
+                    <li>common with $S_C = 100$,</li>
+                    <li>uncommon with $S_U = 75$,</li>
+                    <li>rare with $S_R = 50$,</li>
+                    <li>mythic rare with $S_M = 25$ and</li>
+                    <li>foil variants of each of the above rarities, with $S_{FC} = S_C$, $S_{FU} = S_U$, $S_{FR} = S_R$ and $S_{FM} = S_M$.</li>
                 </ul>
                 <p>
-                    Let $N$ be the number of cards in a booster pack, and for any $n \in \{1, \ldots, N\}$ and $r \in \mathcal{R}$, let $p_{nr}$
+                    Let $N$ be the number of cards in a booster pack, and for any $n \in \{1, \ldots, N\}$ and $r \in \mathcal{R}$, let $p_n^r$
                     denote the probability that card $n$ in the pack is of rarity $r$. If we assume that there are no special rules about booster
-                    box guarantees or duplicate cards in packs (i.e., each booster pack card slot is sampled independently), then the
-                    $N \times |\mathcal{R}|$ matrix $\boldsymbol{P}$ of these probabilities (along with the rarity set counts $S_r$) uniquely
-                    defines the booster pack.
+                    box guarantees or duplicate cards in packs (i.e., each booster pack is independent and identically distributed and within a
+                    booster pack, each card slot is sampled independently), then the $N \times |\mathcal{R}|$ matrix $\boldsymbol{P}$ of these
+                    probabilities (along with the rarity set counts $S_r$) uniquely defines the booster pack.
                 </p>
-                <div class="image">
-                    <img src="../images/sorcery_booster.png" alt="The contents of a Sorcery TCG booster pack." style="max-width: 700px;">
-                </div>
                 <p>
-                    Continuing the Sorcery example, using the above image and a 
-                    https://www.collectorarthouse.com/collectors-corner/alpha-set-data
-                    https://therealisticcollector.com/2023/09/05/sorcery-contested-realm-tcg-complete-print-run-numbers-and-pull-rates/
+                    Continuing the hypothetical example, let's say that the booster pack contains 12 cards and is laid out as follows:
                 </p>
+                <ul>
+                    <li>cards 1-7: always common, so for $n \in \{ 1, \ldots, 7 \}$, $p_N^C = 1$ and $p_n^r = 0$ for all $r \neq C$;</li>
+                    <li>cards 8-10: always uncommon, so for $n \in \{ 8, 9, 10 \}$, $p_N^U = 1$ and $p_n^r = 0$ for all $r \neq U$;</li>
+                    <li>card 11: 80% likely to be rare and 20% likely to be mythic rare, so $p_{11}^R = 0.8$, $p_{11}^M = 0.2$ and $p_{11}^C = p_{11}^U = 0$; and</li>
+                    <li>card 12: 50% foil common, 30% foil uncommon, 15% foil rare and 5% foil mythic, so $p_{12}^{FC} = 0.5$, $p_{12}^{FU} = 0.3$, $p_{12}^{FR} = 0.15$ and $p_{12}^{FM} = 0.05$.</li>
+                </ul>
 
                 <h3>Likelihood of opening a desired card from multiple booster packs</h3>
-                <p>TODO</p>
+                <p>
+                    Let's say we have $B \in \mathbb{N}$ booster packs to open, and we have identified a subset of desired cards
+                    $\mathcal{D} \in \mathcal{C}$ that we would like to find, and that we would be happy to open at least one of those cards. For
+                    each rarity $r \in \mathcal{R}$, let $d_r \in \mathbb{N}$ be the number of cards in our desired subset at that rarity, so
+                    $$\sum_{r \in \mathcal{R}} d_r = |\mathcal{D}|.$$
+                    TODO: maths
+                </p>
 
                 <h3>Number of booster packs required to be confident in opening a desired card</h3>
                 <p>TODO</p>
