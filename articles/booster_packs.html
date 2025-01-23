@@ -99,8 +99,23 @@
                     which works because the likelihood of opening a specific card of rarity $r \in \mathcal{R}$ from the $n^{\text{th}}$ slot of a
                     booster pack is $\frac{p_n^r}{S_r}$, which you can verify by noticing that the sum of these likelihoods
                     $$\sum_{r \in \mathcal{R}} \sum_{c = 1}^{S_r} \frac{p_n^r}{S_r} \> = \>  \sum_{r \in \mathcal{R}} p_n^r \> = \> 1.$$
-
-                    TODO: example
+                </p>
+                <p>
+                    Continuing the example, suppose that we have 8 booster packs to open and our pool of desired cards $\mathcal{D}$ consists
+                    of 4 rare cards and 8 mythic rare cards, which we would be happy to find as either non-foil or foil, so $d_R = d_{FR} = 4$,
+                    $d_M = d_{FM} = 8$ and $d_C = d_{FC} = d_U = d_{FU} = 0$. Then
+                    $$\begin{align}
+                    \mathbb{P}(\text{open at least one desired card}) \> &= \> 1 - \left( \prod_{n=1}^12 \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^8 \\
+                    &= \> 1 - \left(
+                        \left( 1 - \frac{d_R p_{11}^R}{S_R} - \frac{d_M p_{11}^M}{S_M} \right)
+                        \left( 1 - \frac{d_{FR} p_{12}^{FR}}{S_{FR}} - \frac{d_{FM} p_{12}^{FM}}{S_{FM}} \right)
+                    \right)^8 \\
+                    &= \> 1 - \left( \left( 1 - \frac{4 \times 0.8}{50} - \frac{8 \times 0.2}{25} \right) \left( 1 - \frac{4 \times 0.15}{50} - \frac{8 \times 0.05}{25} \right) \right)^8 \\
+                    &= \> 1 - \left( \left( 1 - 0.064 - 0.064 \right) \left( 1 - 0.012 - 0.016 \right) \right)^8 \\
+                    &= \> 1 - ( 0.872 \times 0.972 )^8 \\
+                    &\approx \> 0.73,
+                    \end{align}$$
+                    so we are 73% likely to open a desired card and be satisfied with our purchase.
                 </p>
 
                 <h3>Number of booster packs required to be confident in opening a desired card</h3>
