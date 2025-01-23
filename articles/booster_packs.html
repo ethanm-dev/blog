@@ -85,10 +85,22 @@
                 <h3>Likelihood of opening a desired card from multiple booster packs</h3>
                 <p>
                     Let's say we have $B \in \mathbb{N}$ booster packs to open, and we have identified a subset of desired cards
-                    $\mathcal{D} \in \mathcal{C}$ that we would like to find, and that we would be happy to open at least one of those cards. For
+                    $\mathcal{D} \subset \mathcal{C}$ that we would like to find, and that we would be happy to open at least one of those cards. For
                     each rarity $r \in \mathcal{R}$, let $d_r \in \mathbb{N}$ be the number of cards in our desired subset at that rarity, so
                     $$\sum_{r \in \mathcal{R}} d_r = |\mathcal{D}|.$$
-                    TODO: maths
+                    Then
+                    $$\begin{align}
+                    \mathbb{P}(\text{open at least one desired card}) \> &= \> 1 - \mathbb{P}(\text{open no desired cards}) \\
+                    &= \> 1 - \mathbb{P}(\text{open no desired cards from a booster pack})^B \\
+                    &= \> 1 - \left( \prod_{n=1}^N \mathbb{P}(\text{card } n \text{ is not desired})\right)^B \\
+                    &= \> 1 - \left( \prod_{n=1}^N \left( 1 - \mathbb{P}(\text{card } n \text{ is desired}) \right) \right)^B \\
+                    &= \> 1 - \left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^B,
+                    \end{align}$$
+                    which works because the likelihood of opening a specific card of rarity $r \in \mathcal{R}$ from the $n^{\text{th}}$ slot of a
+                    booster pack is $\frac{p_n^r}{S_r}$, which you can verify by noticing that the sum of these likelihoods
+                    $$\sum_{r \in \mathcal{R}} \sum_{c = 1}^{S_r} \frac{p_n^r}{S_r} \> = \>  \sum_{r \in \mathcal{R}} p_n^r \> = \> 1.$$
+
+                    TODO: example
                 </p>
 
                 <h3>Number of booster packs required to be confident in opening a desired card</h3>
