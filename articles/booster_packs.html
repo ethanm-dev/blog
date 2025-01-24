@@ -105,7 +105,7 @@
                     of 4 rare cards and 8 mythic rare cards, which we would be happy to find as either non-foil or foil, so $d_R = d_{FR} = 4$,
                     $d_M = d_{FM} = 8$ and $d_C = d_{FC} = d_U = d_{FU} = 0$. Then
                     $$\begin{align}
-                    \mathbb{P}(\text{open at least one desired card}) \> &= \> 1 - \left( \prod_{n=1}^12 \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^8 \\
+                    \mathbb{P}(\text{open at least one desired card}) \> &= \> 1 - \left( \prod_{n=1}^{12} \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^8 \\
                     &= \> 1 - \left(
                         \left( 1 - \frac{d_R p_{11}^R}{S_R} - \frac{d_M p_{11}^M}{S_M} \right)
                         \left( 1 - \frac{d_{FR} p_{12}^{FR}}{S_{FR}} - \frac{d_{FM} p_{12}^{FM}}{S_{FM}} \right)
@@ -119,7 +119,22 @@
                 </p>
 
                 <h3>Number of booster packs required to be confident in opening a desired card</h3>
-                <p>TODO</p>
+                <p>
+                    Let $0 < x < 1$ be the confidence we want to have in opening at least one desired card from $\mathcal{D} \subset \mathcal{C}$,
+                    and we wish to find the minimum number of booster packs $B$ we need to open to achieve this confidence. In the previous section,
+                    we showed that
+                    $$\mathbb{P}(\text{open at least one desired card}) \> = \> 1 - \left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^B.$$
+                    Substituting $x$, we have that
+                    $$x \> \leq \> 1 - \left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^B,$$
+                    and hence
+                    $$B \> \geq \> \frac{\log(1-x)}{\log\left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right) }.$$
+                </p>
+                <p>
+                    If we take the desired subset $\mathcal{D}$ containing 4 rare and 8 mythic rare cards from the previous example, and
+                    let $x = 0.5$ for a target 50% confidence in opening a desired card, we have that
+                    $$B \> \geq \> \frac{\log(0.5)}{\log(0.847584)} \> \approx \> 4.19,$$
+                    so rounding up, we need to open 5 booster packs to be 50% confident that we'll open a desired card.
+                </p>
 
                 <h3>Number of booster packs required to be confident in completing a rarity set</h3>
                 <p>TODO</p>
