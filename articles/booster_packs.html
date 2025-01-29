@@ -15,7 +15,7 @@
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
 
-        <link rel="stylesheet" href="../style.css?version=8">
+        <link rel="stylesheet" href="../style.css?version=9">
     </head>
     <body>
         <div id="container">
@@ -100,6 +100,7 @@
                     booster pack is $\frac{p_n^r}{S_r}$, which you can verify by noticing that the sum of these likelihoods
                     $$\sum_{r \in \mathcal{R}} \sum_{c = 1}^{S_r} \frac{p_n^r}{S_r} \> = \>  \sum_{r \in \mathcal{R}} p_n^r \> = \> 1.$$
                 </p>
+                <!-- TODO: JS implementation -->
                 <p>
                     Continuing the example, suppose that we have 8 booster packs to open and our pool of desired cards $\mathcal{D}$ consists
                     of 4 rare cards and 8 mythic rare cards, which we would be happy to find as either non-foil or foil, so $d_R = d_{FR} = 4$,
@@ -129,6 +130,7 @@
                     and hence
                     $$B \> \geq \> \frac{\log(1-x)}{\log\left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right) }.$$
                 </p>
+                <!-- TODO: JS implementation -->
                 <p>
                     If we take the desired subset $\mathcal{D}$ containing 4 rare and 8 mythic rare cards from the previous example, and
                     let $x = 0.5$ for a target 50% confidence in opening a desired card, we have that
@@ -138,6 +140,7 @@
 
                 <h3>Number of booster packs required to be confident in completing a rarity set</h3>
                 <p>TODO</p>
+                <!-- TODO: consider removing this question -->
 
                 <!--
                 https://math.stackexchange.com/questions/3161373/probability-of-certain-rarities-in-a-trading-card-game-booster-box
@@ -225,6 +228,203 @@
                    this can't be simplified to make B the subject, but we can use a binary search to find the minimum B such that the probability is >= 0.9
                 -->
 
+                <h3>JavaScript calculator</h3>
+                <p>TODO: explanation</p>
+                <div style="overflow-x: auto;">
+                    <table id="model">
+                        <thead>
+                            <tr>
+                                <th>Slot</th>
+                                <th><input class="rarity" value="common"></th>
+                                <th><input class="rarity" value="uncommon"></th>
+                                <th><input class="rarity" value="rare"></th>
+                                <th><input class="rarity" value="mythic"></th>
+                                <th><input class="rarity" value="foil-common"></th>
+                                <th><input class="rarity" value="foil-uncommon"></th>
+                                <th><input class="rarity" value="foil-rare"></th>
+                                <th><input class="rarity" value="foil-mythic"></th>
+                                <th><button id="add-rarity">+</button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="slot">
+                                <td class="slot-number">1</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">2</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">3</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">4</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">5</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">6</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">7</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">8</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">9</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">10</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">11</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.8"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.2"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">12</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.5"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.3"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.15"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.05"></td>
+                                <td><button class="remove-slot">-</button></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td><button id="add-slot">Add slot</button></td>
+                                <td><button class="remove-rarity" data-r="1">-</button></td>
+                                <td><button class="remove-rarity" data-r="2">-</button></td>
+                                <td><button class="remove-rarity" data-r="3">-</button></td>
+                                <td><button class="remove-rarity" data-r="4">-</button></td>
+                                <td><button class="remove-rarity" data-r="5">-</button></td>
+                                <td><button class="remove-rarity" data-r="6">-</button></td>
+                                <td><button class="remove-rarity" data-r="7">-</button></td>
+                                <td><button class="remove-rarity" data-r="8">-</button></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Set Sizes</td>
+                                <td><input class="set" type="number" step="1" min="1" value="100"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="75"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="50"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="25"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="100"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="75"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="50"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="25"></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- TODO: question 1 inputs & outputs, using the above model -->
+
+                <!-- TODO: question 2 inputs & outputs, using the above model -->
+
                 <h3>References</h3>
                 <ol id="references">
                     <!-- TODO -->
@@ -255,5 +455,53 @@
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/glsl.min.js"></script>
     <script>hljs.highlightAll();</script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <script>
+    $( function() {
+        $(document).on("click", ".remove-slot", function() {
+            $(this).parents(".slot").remove();
+
+            $(".slot-number").each(function (i) {
+                $(this).text(i + 1);
+            });
+        });
+
+        $(document).on("click", ".remove-rarity", function() {
+            let r = parseInt($(this).attr("data-r"));
+            $($(".rarity")[r-1]).parent().remove();
+            $(".slot").each(function () {
+                $($(this).find(".likelihood")[r-1]).parent().remove();
+            });
+            $(this).parent().remove();
+            $($(".set")[r-1]).parent().remove();
+
+            $(".remove-rarity").each(function (i) {
+                $(this).attr("data-r", i + 1);
+            });
+        });
+
+        $(document).on("click", "#add-slot", function() {
+            let n = $(".slot").length + 1;
+            let slot_html = `<tr class="slot"><td class="slot-number">${n}</td>`;
+            $(".rarity").each(function () {
+                slot_html += '<td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>';
+            });
+            slot_html += '<td><button class="remove-slot">-</button></td></tr>';
+            $("#model tbody").append(slot_html);
+        });
+
+        $(document).on("click", "#add-rarity", function() {
+            let r = $(".rarity").length + 1;
+            $(this).parent().before('<th><input class="rarity"></th>');
+            $(".slot").each(function () {
+                $(this).find("td:last").before('<td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>');
+            });
+            $(".remove-rarity:last").parent().after(`<td><button class="remove-rarity" data-r="${r}">-</button></td>`);
+            $(".set:last").parent().after('<td><input class="set" type="number" step="1" min="1"></td>');
+        });
+    });
+    </script>
 
 </html>
