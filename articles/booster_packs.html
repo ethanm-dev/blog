@@ -16,6 +16,45 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
 
         <link rel="stylesheet" href="../style.css?version=9">
+
+        <style>
+            th input, td input {
+                width: 100%;
+                box-sizing: border-box;
+                border: none;
+                min-width: 75px;
+            }
+            th input:focus, td input:focus {
+                outline: none;
+            }
+            td.slot-number {
+                width: 75px;
+                text-align: center;
+            }
+            #model button {
+                width: 100%;
+                max-width: 22px;
+                color: white;
+                font-weight: bold;
+                font-size: 18px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .remove-slot, .remove-rarity {
+                background-color: #cc0000;
+            }
+            #add-slot, #add-rarity {
+                background-color: #339933;
+            }
+            #model tfoot tr:nth-child(1) td {
+                text-align: center;
+            }
+
+            #check-model {
+                font-size: inherit;
+            }
+        </style>
     </head>
     <body>
         <div id="container">
@@ -228,8 +267,17 @@
                    this can't be simplified to make B the subject, but we can use a binary search to find the minimum B such that the probability is >= 0.9
                 -->
 
-                <h3>JavaScript calculator</h3>
-                <p>TODO: explanation</p>
+                <h3>Interactive booster pack model</h3>
+                <p>
+                    Below is an interactive table which you can use to define a booster pack model for calculating answers to the questions
+                    discussed in this article. The table is pre-populated with the hypothetical booster pack used in the examples above, but
+                    you can add & remove card slots and rarities, adjust the likelihoods & set sizes and rename the rarities to fit this
+                    model to a real TCG booster pack you would like to query. Leaving a likelihood blank is equivalent to setting it to 0.
+                    After you're finished defining your model, you can use the "Check model" button to check if you have defined a valid
+                    booster pack. If the model is valid, you can then scroll down and use it for calculations. If you reload the page, the
+                    model will be reset to the default hypothetical example.
+                </p>
+
                 <div style="overflow-x: auto;">
                     <table id="model">
                         <thead>
@@ -257,7 +305,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">2</td>
@@ -269,7 +317,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">3</td>
@@ -281,7 +329,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">4</td>
@@ -293,7 +341,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">5</td>
@@ -305,7 +353,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">6</td>
@@ -317,7 +365,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">7</td>
@@ -329,7 +377,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">8</td>
@@ -341,7 +389,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">9</td>
@@ -353,7 +401,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">10</td>
@@ -365,7 +413,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">11</td>
@@ -377,7 +425,7 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                             <tr class="slot">
                                 <td class="slot-number">12</td>
@@ -389,20 +437,20 @@
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.3"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.15"></td>
                                 <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.05"></td>
-                                <td><button class="remove-slot">-</button></td>
+                                <td><button class="remove-slot">&minus;</button></td>
                             </tr>
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td><button id="add-slot">Add slot</button></td>
-                                <td><button class="remove-rarity" data-r="1">-</button></td>
-                                <td><button class="remove-rarity" data-r="2">-</button></td>
-                                <td><button class="remove-rarity" data-r="3">-</button></td>
-                                <td><button class="remove-rarity" data-r="4">-</button></td>
-                                <td><button class="remove-rarity" data-r="5">-</button></td>
-                                <td><button class="remove-rarity" data-r="6">-</button></td>
-                                <td><button class="remove-rarity" data-r="7">-</button></td>
-                                <td><button class="remove-rarity" data-r="8">-</button></td>
+                                <td><button id="add-slot">+</button></td>
+                                <td><button class="remove-rarity" data-r="1">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="2">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="3">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="4">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="5">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="6">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="7">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="8">&minus;</button></td>
                                 <td></td>
                             </tr>
                             <tr>
@@ -420,6 +468,15 @@
                         </tfoot>
                     </table>
                 </div>
+
+                <p style="margin-top: 20px;">
+                    <button id="check-model">Check model</button>
+                    &nbsp;&nbsp;&nbsp;
+                    <span id="check-result"></span>
+                </p>
+
+                <h3>Model calculations</h3>
+                <p>TODO</p>
 
                 <!-- TODO: question 1 inputs & outputs, using the above model -->
 
@@ -460,6 +517,7 @@
 
     <script>
     $( function() {
+        // functions for adding/removing slots/rarities from model table
         $(document).on("click", ".remove-slot", function() {
             $(this).parents(".slot").remove();
 
@@ -488,7 +546,7 @@
             $(".rarity").each(function () {
                 slot_html += '<td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>';
             });
-            slot_html += '<td><button class="remove-slot">-</button></td></tr>';
+            slot_html += '<td><button class="remove-slot">&minus;</button></td></tr>';
             $("#model tbody").append(slot_html);
         });
 
@@ -498,9 +556,86 @@
             $(".slot").each(function () {
                 $(this).find("td:last").before('<td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>');
             });
-            $(".remove-rarity:last").parent().after(`<td><button class="remove-rarity" data-r="${r}">-</button></td>`);
+            $(".remove-rarity:last").parent().after(`<td><button class="remove-rarity" data-r="${r}">&minus;</button></td>`);
             $(".set:last").parent().after('<td><input class="set" type="number" step="1" min="1"></td>');
         });
+
+        // functions for loading & checking the model
+        function load_model() {
+            let rarity_names = [];
+            $(".rarity").each(function () {
+                rarity_names.push($(this).val());
+            });
+
+            let probabilities = [];
+            $(".slot").each(function () {
+                let slot_probs = [];
+                $(this).find(".likelihood").each(function () {
+                    let likelihood = $(this).val();
+                    if (likelihood == "") {
+                        slot_probs.push(0);
+                    } else {
+                        slot_probs.push(parseFloat(likelihood));
+                    }
+                });
+                probabilities.push(slot_probs);
+            });
+
+            let set_sizes = [];
+            $(".set").each(function () {
+                set_sizes.push(parseInt($(this).val()));
+            });
+
+            return {rarity_names: rarity_names, probabilities: probabilities, set_sizes: set_sizes};
+        }
+
+        function check_model(model) {
+            let n_rarities = model.rarity_names.length;
+            let n_slots = model.probabilities.length;
+
+            for (let r = 0; r < n_rarities; r++) {
+                if (model.rarity_names[r] == "") {
+                    return {result: false, message: `Rarity name ${r+1} is empty.`};
+                }
+            }
+            let rarities_set = new Set(model.rarity_names);
+            if (rarities_set.size != n_rarities) {
+                return {result: false, message: "Rarity names are not unique."};
+            }
+
+            for (let n = 0; n < n_slots; n++) {
+                let p_sum = 0.0;
+                for (let r = 0; r < n_rarities; r++) {
+                    if (model.probabilities[n][r] < 0 || model.probabilities[n][r] > 1) {
+                        return {result: false, message: `Slot ${n+1} ${model.rarity_names[r]} probability is invalid.`};
+                    }
+                    p_sum += model.probabilities[n][r];
+                }
+                if (Math.abs(p_sum - 1.0) > 0.0005) {
+                    return {result: false, message: `Slot ${n+1} probabilities do not sum to 1.`};
+                }
+            }
+
+            for (let r = 0; r < n_rarities; r++) {
+                if (model.set_sizes[r] < 1) {
+                    return {result: false, message: `Set size for ${model.rarity_names[r]} rarity is invalid.`};
+                }
+            }
+
+            return {result: true, message: "Model is valid."};
+        }
+
+        $(document).on("click", "#check-model", function() {
+            let model = load_model();
+            let check = check_model(model);
+            $("#check-result").text(check.message);
+        });
+
+        // functions for question 1
+        // TODO
+
+        // functions for question 2
+        // TODO
     });
     </script>
 
