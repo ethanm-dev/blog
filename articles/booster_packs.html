@@ -47,12 +47,15 @@
             #add-slot, #add-rarity {
                 background-color: #339933;
             }
-            #model tfoot tr:nth-child(1) td {
+            #model tfoot tr:nth-child(1) td, #model tfoot tr td:nth-child(1) {
                 text-align: center;
             }
 
-            #check-model {
+            #check-model, #calc-boosters, #calc-likelihood {
                 font-size: inherit;
+            }
+            #calc-boosters, #calc-likelihood {
+                width: 120px;
             }
         </style>
     </head>
@@ -78,19 +81,22 @@
                     interested in answering questions like:
                 </p>
                 <ul>
-                    <li>if I open $B$ booster packs, what is the probability of opening at least one copy of a particular card I want?</li>
+                    <li>if I open $B$ booster packs, what is the probability of opening at least one of the cards I want?</li>
                     <li>how many booster packs do I need to open to be more than 50% sure I will get at least one of the cards I want?</li>
-                    <li>how many booster packs must I open to be 90% confident that I will open every rare card in the set?</li>
+                    <!-- <li>how many booster packs must I open to be 90% confident that I will open every rare card in the set?</li> -->
                 </ul>
                 <p>
                     In this article, I define a generalised mathematical model of a TCG booster pack (which can be applied to any
-                    particular trading card game), and use it to answer the above questions.
+                    particular trading card game), and use it to answer the above questions. At the end of the article, you'll find
+                    an interactive calculator that you can use to input a booster pack model and compute answers to these questions.
+                    This calculator was implemented in JavaScript (using jQuery), and you can read the implementation by viewing the
+                    source code of this webpage (typically available in the right-click menu).
                 </p>
 
                 <h3>Mathematical model</h3>
                 <p>
                     Let $\mathcal{C}$ be the set of all cards we could possibly find in the booster pack, and let $\mathcal{R}$ be the set of
-                    all card rarities present in \mathbb{C}. For a given rarity $r \in \mathcal{R}$, let $S_r$ be number of cards of that
+                    all card rarities present in $\mathcal{C}$. For a given rarity $r \in \mathcal{R}$, let $S_r$ be number of cards of that
                     rarity in $\mathcal{C}$, such that
                     $$\sum_{r \in \mathcal{R}} S_r \> = \> |\mathcal{C}|.$$
                     It is important that we count variants of the same card (e.g., a foil version) as separate cards in $\mathcal{C}$ if they
@@ -107,25 +113,38 @@
                 <p>
                     Let $N$ be the number of cards in a booster pack, and for any $n \in \{1, \ldots, N\}$ and $r \in \mathcal{R}$, let $p_n^r$
                     denote the probability that card $n$ in the pack is of rarity $r$. If we assume that there are no special rules about booster
-                    box guarantees or duplicate cards in packs (i.e., each booster pack is independent and identically distributed and within a
+                    box guarantees or duplicate cards in packs (i.e., each booster pack is independent and identically distributed, and within a
                     booster pack, each card slot is sampled independently), then the $N \times |\mathcal{R}|$ matrix $\boldsymbol{P}$ of these
-                    probabilities (along with the rarity set counts $S_r$) uniquely defines the booster pack.
+                    probabilities (along with the rarity set counts $S_r$) uniquely defines the booster pack. These probabilities can typically
+                    be found on a trading card game's website - for example, the image below shows an explanation of a booster pack from a
+                    recent TCG called <a href="https://sorcerytcg.com/" target="_blank">Sorcery: Contested Realm</a>.
                 </p>
+                <div class="image">
+                    <img src="../images/sorcery_booster.png" alt="Explanation of a Sorcery booster pack." style="max-width: 700px;">
+                </div>
                 <p>
-                    Continuing the hypothetical example, let's say that the booster pack contains 12 cards and is laid out as follows:
+                    Continuing our hypothetical example, let's say that the booster pack contains 12 cards and is laid out as follows:
                 </p>
                 <ul>
-                    <li>cards 1-7: always common, so for $n \in \{ 1, \ldots, 7 \}$, $p_N^C = 1$ and $p_n^r = 0$ for all $r \neq C$;</li>
-                    <li>cards 8-10: always uncommon, so for $n \in \{ 8, 9, 10 \}$, $p_N^U = 1$ and $p_n^r = 0$ for all $r \neq U$;</li>
-                    <li>card 11: 80% likely to be rare and 20% likely to be mythic rare, so $p_{11}^R = 0.8$, $p_{11}^M = 0.2$ and $p_{11}^C = p_{11}^U = 0$; and</li>
-                    <li>card 12: 50% foil common, 30% foil uncommon, 15% foil rare and 5% foil mythic, so $p_{12}^{FC} = 0.5$, $p_{12}^{FU} = 0.3$, $p_{12}^{FR} = 0.15$ and $p_{12}^{FM} = 0.05$.</li>
+                    <li>cards 1-7: always common, so for $n \in \{ 1, \ldots, 7 \}$, &nbsp; $p_N^C = 1$ and $p_n^r = 0$ for all $r \neq C$;</li>
+                    <li>cards 8-10: always uncommon, so for $n \in \{ 8, 9, 10 \}$, &nbsp; $p_N^U = 1$ and $p_n^r = 0$ for all $r \neq U$;</li>
+                    <li>card 11: 80% likely to be rare and 20% likely to be mythic rare, so $p_{11}^R = 0.8$,&nbsp; $p_{11}^M = 0.2$ &nbsp;and&nbsp; $p_{11}^C = p_{11}^U = 0$; and</li>
+                    <li>
+                        card 12: 50% foil common, 30% foil uncommon, 15% foil rare and 5% foil mythic, so $p_{12}^{FC} = 0.5$,&nbsp;
+                        $p_{12}^{FU} = 0.3$,&nbsp; $p_{12}^{FR} = 0.15$ &nbsp;and&nbsp; $p_{12}^{FM} = 0.05$.
+                    </li>
                 </ul>
+                <p>
+                    Notice that
+                    $$\sum_{r \in \mathcal{R}} p_n^r \> = \> 1,$$
+                    for all $n$, meaning each row of $\boldsymbol{P}$ sums to 1, because each card slot is guaranteed to contain a card.
+                </p>
 
                 <h3>Likelihood of opening a desired card from multiple booster packs</h3>
                 <p>
                     Let's say we have $B \in \mathbb{N}$ booster packs to open, and we have identified a subset of desired cards
-                    $\mathcal{D} \subset \mathcal{C}$ that we would like to find, and that we would be happy to open at least one of those cards. For
-                    each rarity $r \in \mathcal{R}$, let $d_r \in \mathbb{N}$ be the number of cards in our desired subset at that rarity, so
+                    $\mathcal{D} \subset \mathcal{C}$ that we would like to find, and that we would be happy to open at least one of these cards. For
+                    each rarity $r \in \mathcal{R}$, let $0 \leq d_r \leq S_r$ be the number of cards in our desired subset at that rarity, so
                     $$\sum_{r \in \mathcal{R}} d_r = |\mathcal{D}|.$$
                     Then
                     $$\begin{align}
@@ -135,15 +154,14 @@
                     &= \> 1 - \left( \prod_{n=1}^N \left( 1 - \mathbb{P}(\text{card } n \text{ is desired}) \right) \right)^B \\
                     &= \> 1 - \left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^B,
                     \end{align}$$
-                    which works because the likelihood of opening a specific card of rarity $r \in \mathcal{R}$ from the $n^{\text{th}}$ slot of a
+                    because the likelihood of opening a specific card of rarity $r \in \mathcal{R}$ from the $n^{\text{th}}$ slot of a
                     booster pack is $\frac{p_n^r}{S_r}$, which you can verify by noticing that the sum of these likelihoods
-                    $$\sum_{r \in \mathcal{R}} \sum_{c = 1}^{S_r} \frac{p_n^r}{S_r} \> = \>  \sum_{r \in \mathcal{R}} p_n^r \> = \> 1.$$
+                    $$\sum_{r \in \mathcal{R}} \sum_{c = 1}^{S_r} \frac{p_n^r}{S_r} \> = \> \sum_{r \in \mathcal{R}} p_n^r \> = \> 1.$$
                 </p>
-                <!-- TODO: JS implementation -->
                 <p>
                     Continuing the example, suppose that we have 8 booster packs to open and our pool of desired cards $\mathcal{D}$ consists
-                    of 4 rare cards and 8 mythic rare cards, which we would be happy to find as either non-foil or foil, so $d_R = d_{FR} = 4$,
-                    $d_M = d_{FM} = 8$ and $d_C = d_{FC} = d_U = d_{FU} = 0$. Then
+                    of 4 rare cards and 8 mythic rare cards, which we would be happy to find as either non-foil or foil, so $d_R = d_{FR} = 4$,&nbsp;
+                    $d_M = d_{FM} = 8$ &nbsp;and&nbsp; $d_C = d_{FC} = d_U = d_{FU} = 0$. Then
                     $$\begin{align}
                     \mathbb{P}(\text{open at least one desired card}) \> &= \> 1 - \left( \prod_{n=1}^{12} \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^8 \\
                     &= \> 1 - \left(
@@ -169,7 +187,6 @@
                     and hence
                     $$B \> \geq \> \frac{\log(1-x)}{\log\left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right) }.$$
                 </p>
-                <!-- TODO: JS implementation -->
                 <p>
                     If we take the desired subset $\mathcal{D}$ containing 4 rare and 8 mythic rare cards from the previous example, and
                     let $x = 0.5$ for a target 50% confidence in opening a desired card, we have that
@@ -177,84 +194,14 @@
                     so rounding up, we need to open 5 booster packs to be 50% confident that we'll open a desired card.
                 </p>
 
-                <h3>Number of booster packs required to be confident in completing a rarity set</h3>
-                <p>TODO</p>
-                <!-- TODO: consider removing this question -->
-
                 <!--
                 https://math.stackexchange.com/questions/3161373/probability-of-certain-rarities-in-a-trading-card-game-booster-box
-
-                describing a theoretical TCG set card rarities & variants and their total counts:
-                - common (C) with S_C = 100 cards
-                - uncommon (U) with S_U = 50 cards
-                - rare (R) with S_R = 25 cards
-                - mythic (M) with S_M = 10 cards
-                - foil rare (FR) with S_FR = 25 cards
-                - foil mythic (FM) with S_FM = 10 cards
-                and denote the set of all rarities |R = {C, U, R, M, FR, FM}
-
-                describing the card odds for each slot in a booster pack:
-                - card 1: 100% common
-                - card 2: 100% common
-                - card 3: 100% common
-                - card 4: 100% common
-                - card 5: 80% common 20% rare
-                - card 6: 100% uncommon
-                - card 7: 100% uncommon
-                - card 8: 80% uncommon 20% rare
-                - card 9: 80% rare 20% mythic
-                - card 10: 40% rare 10% mythic 40% foil rare 10% foil mythic
-                call these probabilities P(card n is rarity r) = p_nr (imagine a N x R matrix of these probabilities)
-                so for example, p_9c = 0, p_9u = 0, p_9r = 0.8 and p_9m = 0.2
-                assume no booster box guarantees or special rules about duplicates
-
-                Q: what is the probability of getting at least 1 mythic (foil or non-foil) in a booster pack?
-                A: P(at least 1 mythic) = 1 - P(no mythics)
-                                        = 1 - \prod_{n=1}^{N} P(card n is not mythic)
-                                        = 1 - \prod_{n=1}^{N} (1 - p_nM - p_nFM)
-                                        = 1 - (1 - p_9M) * (1 - p_10M - p_10FM)
-                                        = 1 - 0.8 * 0.8
-                                        = 0.36
 
                 Q: what is the expected number of rare (foil or non-foil) cards in a booster pack?
                 A: E[rare cards] = \sum_{n=1}^{N} P(card n is rare)
                                  = \sum_{n=1}^{N} (p_nR + p_nFR)
                                  = 0.2 + 0.2 + 0.8 + 0.8
                                  = 2
-
-                Q: if I open B booster packs, what is the probability of pulling at least one copy of a particular card I want?
-                A: lets say the particular card in question is a non-foil rare card and B=12
-                   when we open B booster packs, we sample from each card slot B times (bc all packs are homogeneous and independent)
-                   => P(open at least one of particular card) = 1 - P(open no copies of particular card)
-                                                              = 1 - P(open no copies of particular card from a booster pack)^B
-                                                              = 1 - [\prod_{n=1}^{N} P(card n is not particular card)]^B
-                                                              = 1 - [\prod_{n=1}^{N} (1 - P(card n is particular card))]^B
-                                                              = 1 - [\prod_{n=1}^{N} (1 - p_nR / S_R)]^B
-                                                              = 1 - [(1 - 0.2/25) * (1 - 0.2/25) * (1 - 0.8/25) * (1 - 0.4/25)]^12
-                                                              = 1 - [0.992 * 0.992 * 0.968 * 0.984]^12
-                                                              ~= 0.54
-
-                Q: if I open B booster packs, what is the probability of getting at least one of the cards I want?
-                A: similarly to the previous answer, lets say we want 3 foil or non-foil rares and 2 foil or non-foil mythics and B=6
-                   so the desired counts are d_C = d_U = 0 and d_R = d_M = d_FR = d_FM = 3
-                   P(open at least one desired card) = 1 - P(open no desired cards)
-                                                     = 1 - P(open no desired cards from a booster pack)^B
-                                                     = 1 - [\prod_{n=1}^{N} P(card n is not desired)]^B
-                                                     = 1 - [\prod_{n=1}^{N} (1 - P(card n is desired))]^B
-                                                     = 1 - [\prod_{n=1}^{N} (1 - \sum_{r \in |R} d_r p_nr / S_r)]^B
-                                                     = 1 - [(1 - 3*0.2/25) * (1 - 3*0.2/25) * (1 - 3*0.8/25 - 3*0.2/10) * (1 - 3*0.4/25 - 3*0.1/10 - 3*0.4/25 - 3*0.1/10)]^6
-                                                     = 1 - [0.976 * 0.976 * 0.844 * 0.844]^6
-                                                     ~= 0.9
-
-                Q: how many booster packs do I need to open to be >= 50% sure I will open at least one of the cards I want?
-                A: given what we derived in the above answer, lets say we want 3 foil or non-foil rares and 2 foil or non-foil mythics and let B be the number of booster packs
-                   P(open at least one desired card) = 1 - [\prod_{n=1}^{N} (1 - \sum_{r \in |R} d_r p_nr / S_r)]^B
-                                              => 0.5 <= 1 - [(1 - 3*0.2/25) * (1 - 3*0.2/25) * (1 - 3*0.8/25 - 3*0.2/10) * (1 - 3*0.4/25 - 3*0.1/10 - 3*0.4/25 - 3*0.1/10)]^B
-                                                     = 1 - [0.976 * 0.976 * 0.844 * 0.844]^B
-                                                     ~= 1 - 0.6786^B
-                                         => 0.6786^B >= 0.5
-                                                => B >= log(0.5) / log(0.6786) ~= 1.78
-                    hence you need to open 3 booster packs to be 50% sure you will open at least one of the desired cards
 
                 Q: how many booster packs do I need to open to be >= 90% sure I will open every rare in the set?
                 A: we previously derived that E[rare cards] = 2 per booster pack
@@ -272,10 +219,14 @@
                     Below is an interactive table which you can use to define a booster pack model for calculating answers to the questions
                     discussed in this article. The table is pre-populated with the hypothetical booster pack used in the examples above, but
                     you can add & remove card slots and rarities, adjust the likelihoods & set sizes and rename the rarities to fit this
-                    model to a real TCG booster pack you would like to query. Leaving a likelihood blank is equivalent to setting it to 0.
-                    After you're finished defining your model, you can use the "Check model" button to check if you have defined a valid
-                    booster pack. If the model is valid, you can then scroll down and use it for calculations. If you reload the page, the
-                    model will be reset to the default hypothetical example.
+                    model to a real TCG booster pack you would like to query. The bottom row of the table is for inputting the desired subset
+                    of cards $\mathcal{D}$. Note that leaving a field blank is equivalent to setting it to 0. After you're finished defining
+                    your model, you can use the "Check model" button to check if you have defined a valid booster pack. If you reload the page,
+                    the model will be reset to the default hypothetical example.
+                </p>
+                <p>
+                    Below the table, enter a number of booster packs to compute the likelihood of opening at least one desired card, or enter
+                    a confidence threshold to compute the number of booster packs required to achieve that confidence.
                 </p>
 
                 <div style="overflow-x: auto;">
@@ -454,7 +405,7 @@
                                 <td></td>
                             </tr>
                             <tr>
-                                <td>Set Sizes</td>
+                                <td><b>Set Sizes</b></td>
                                 <td><input class="set" type="number" step="1" min="1" value="100"></td>
                                 <td><input class="set" type="number" step="1" min="1" value="75"></td>
                                 <td><input class="set" type="number" step="1" min="1" value="50"></td>
@@ -463,6 +414,18 @@
                                 <td><input class="set" type="number" step="1" min="1" value="75"></td>
                                 <td><input class="set" type="number" step="1" min="1" value="50"></td>
                                 <td><input class="set" type="number" step="1" min="1" value="25"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><b>Desired</b></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1" value="4"></td>
+                                <td><input class="desired" type="number" step="1" min="1" value="8"></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1" value="4"></td>
+                                <td><input class="desired" type="number" step="1" min="0" value="8"></td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -474,17 +437,18 @@
                     &nbsp;&nbsp;&nbsp;
                     <span id="check-result"></span>
                 </p>
-
-                <h3>Model calculations</h3>
-                <p>TODO</p>
-
-                <!-- TODO: question 1 inputs & outputs, using the above model -->
-
-                <!-- TODO: question 2 inputs & outputs, using the above model -->
+                <p>
+                    <input id="calc-boosters" type="number" step="1" min="1"> booster packs
+                    &nbsp;<b>=</b>&nbsp;
+                    <input id="calc-likelihood" type="number" step="0.001" min="0" max="1"> likelihood
+                </p>
 
                 <h3>References</h3>
                 <ol id="references">
-                    <!-- TODO -->
+                    <li>
+                        Sison, Michael. "Money and Mathematics: Booster Packs." <i>SixPrizes</i>, 10 Apr. 2011,
+                        <a href="https://sixprizes.com/2011/04/10/money-and-mathematics-booster/" target="_blank">sixprizes.com/2011/04/10/money-and-mathematics-booster/</a>.
+                    </li>
                 </ol>
                 <p>
                     If you have any corrections or questions - please send me an email and we can have a discussion. Any
@@ -534,6 +498,7 @@
             });
             $(this).parent().remove();
             $($(".set")[r-1]).parent().remove();
+            $($(".desired")[r-1]).parent().remove();
 
             $(".remove-rarity").each(function (i) {
                 $(this).attr("data-r", i + 1);
@@ -558,6 +523,7 @@
             });
             $(".remove-rarity:last").parent().after(`<td><button class="remove-rarity" data-r="${r}">&minus;</button></td>`);
             $(".set:last").parent().after('<td><input class="set" type="number" step="1" min="1"></td>');
+            $(".desired:last").parent().after('<td><input class="desired" type="number" step="1" min="0"></td>');
         });
 
         // functions for loading & checking the model
@@ -586,7 +552,22 @@
                 set_sizes.push(parseInt($(this).val()));
             });
 
-            return {rarity_names: rarity_names, probabilities: probabilities, set_sizes: set_sizes};
+            let desired_counts = [];
+            $(".desired").each(function () {
+                let count = $(this).val();
+                if (count == "") {
+                    desired_counts.push(0);
+                } else {
+                    desired_counts.push(parseInt(count));
+                }
+            });
+
+            return {
+                rarity_names: rarity_names,
+                probabilities: probabilities,
+                set_sizes: set_sizes,
+                desired_counts: desired_counts
+            };
         }
 
         function check_model(model) {
@@ -620,6 +601,9 @@
                 if (model.set_sizes[r] < 1) {
                     return {result: false, message: `Set size for ${model.rarity_names[r]} rarity is invalid.`};
                 }
+                if (model.desired_counts[r] < 0 || model.desired_counts[r] > model.set_sizes[r]) {
+                    return {result: false, message: `Desired cards count for ${model.rarity_names[r]} rarity is invalid.`};
+                }
             }
 
             return {result: true, message: "Model is valid."};
@@ -631,11 +615,78 @@
             $("#check-result").text(check.message);
         });
 
-        // functions for question 1
-        // TODO
+        // functions for calculator
+        function p_booster_no_desired_cards(model) {
+            let n_slots = model.probabilities.length;
+            let n_rarities = model.rarity_names.length;
 
-        // functions for question 2
-        // TODO
+            let prob = 1.0;
+            for (let n = 0; n < n_slots; n++) {
+                let prob_desired_in_slot = 0.0;
+                for (let r = 0; r < n_rarities; r++) {
+                    prob_desired_in_slot += model.desired_counts[r] * model.probabilities[n][r] / model.set_sizes[r];
+                }
+                prob *= 1 - prob_desired_in_slot;
+            }
+            return prob;
+        }
+
+        function q1(model, booster_count) {
+            return 1 - Math.pow(p_booster_no_desired_cards(model), booster_count);
+        }
+
+        function q2(model, prob_threshold) {
+            let booster_min = Math.log(1 - prob_threshold) / Math.log(p_booster_no_desired_cards(model));
+            return Math.ceil(booster_min);
+        }
+
+        $(document).on("change", "#calc-boosters", function() {
+            if ($(this).val() == "") {
+                return;
+            }
+
+            $("#calc-likelihood").val("");
+
+            let model = load_model();
+            let check = check_model(model);
+            if (!check.result) {
+                $("#check-result").text(check.message);
+                return;
+            }
+
+            let booster_count = parseInt($(this).val());
+            if (booster_count < 1) {
+                $("#check-result").text("Number of booster packs must be at least 1.");
+                return;
+            }
+
+            let prob = q1(model, booster_count);
+            $("#calc-likelihood").val(prob.toFixed(3));
+        });
+
+        $(document).on("change", "#calc-likelihood", function() {
+            if ($(this).val() == "") {
+                return;
+            }
+
+            $("#calc-boosters").val("");
+
+            let model = load_model();
+            let check = check_model(model);
+            if (!check.result) {
+                $("#check-result").text(check.message);
+                return;
+            }
+
+            let likelihood = parseFloat($(this).val());
+            if (likelihood <= 0 || likelihood >= 1) {
+                $("#check-result").text("Likelihood must be between 0 and 1.");
+                return;
+            }
+
+            let min_boosters = q2(model, likelihood);
+            $("#calc-boosters").val(min_boosters);
+        });
     });
     </script>
 
