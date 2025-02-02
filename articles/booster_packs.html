@@ -1,0 +1,693 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Statistics of finding desired cards in TCG booster packs</title>
+        <meta charset="utf-8" />
+        <meta name="description" content="An explanation of the statistics behind opening trading card booster packs, and a JavaScript tool to calculate the likelihood of opening desired cards.">
+        <meta name="author" content="Ethan Mitchell">
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <link rel="shortcut icon" type="image/png" href="../images/e.png"/>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+
+        <link rel="stylesheet" href="../style.css?version=9">
+
+        <style>
+            th input, td input {
+                width: 100%;
+                box-sizing: border-box;
+                border: none;
+                min-width: 75px;
+            }
+            th input:focus, td input:focus {
+                outline: none;
+            }
+            td.slot-number {
+                width: 75px;
+                text-align: center;
+            }
+            #model button {
+                width: 100%;
+                max-width: 22px;
+                color: white;
+                font-weight: bold;
+                font-size: 18px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .remove-slot, .remove-rarity {
+                background-color: #cc0000;
+            }
+            #add-slot, #add-rarity {
+                background-color: #339933;
+            }
+            #model tfoot tr:nth-child(1) td, #model tfoot tr td:nth-child(1) {
+                text-align: center;
+            }
+
+            #check-model, #calc-boosters, #calc-likelihood {
+                font-size: inherit;
+            }
+            #calc-boosters, #calc-likelihood {
+                width: 120px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+            <a id="home-link" href="../index.html">
+                <div id="header">&lt; Ethan Mitchell</div>
+            </a>
+
+            <p id="title">Statistics of finding desired cards in TCG booster packs</p>
+            <p id="publish">January 2025</p>
+
+            <section class="article-body">
+                <h3>Overview</h3>
+                <p>
+                    Trading card games such as Magic the Gathering, Yu-Gi-Oh and Pokemon are comprised of cards that are each assigned
+                    a rarity such as common, uncommon and rare (amongst other gameplay attributes). Players can purchase booster packs
+                    to expand their collection, which are sealed, randomised packages of cards, most of which contain cards worth less
+                    than the price of the booster pack, while some contain a chase card worth significantly more. Serious collectors
+                    sometimes consider the expected value of a booster box (which contains 10-36 booster packs, depending on the product)
+                    to determine if it is worth purchasing, using websites such as <a href="https://www.mtgstocks.com/analytics/expectedvalue">MTG Stocks</a>.
+                    As someone who enjoys collecting and playing with trading cards instead of just selling them for profit, I am more
+                    interested in answering questions like:
+                </p>
+                <ul>
+                    <li>if I open $B$ booster packs, what is the probability of opening at least one of the cards I want?</li>
+                    <li>how many booster packs do I need to open to be more than 50% sure I will get at least one of the cards I want?</li>
+                    <!-- <li>how many booster packs must I open to be 90% confident that I will open every rare card in the set?</li> -->
+                </ul>
+                <p>
+                    In this article, I define a generalised mathematical model of a TCG booster pack (which can be applied to any
+                    particular trading card game), and use it to answer the above questions. At the end of the article, you'll find
+                    an interactive calculator that you can use to input a booster pack model and compute answers to these questions.
+                    This calculator was implemented in JavaScript (using jQuery), and you can read the implementation by viewing the
+                    source code of this webpage (typically available in the right-click menu).
+                </p>
+
+                <h3>Mathematical model</h3>
+                <p>
+                    Let $\mathcal{C}$ be the set of all cards we could possibly find in the booster pack, and let $\mathcal{R}$ be the set of
+                    all card rarities present in $\mathcal{C}$. For a given rarity $r \in \mathcal{R}$, let $S_r$ be number of cards of that
+                    rarity in $\mathcal{C}$, such that
+                    $$\sum_{r \in \mathcal{R}} S_r \> = \> |\mathcal{C}|.$$
+                    It is important that we count variants of the same card (e.g., a foil version) as separate cards in $\mathcal{C}$ if they
+                    have different likelihoods of being found in the booster pack. Imagine a hypothetical TCG booster pack whose card set
+                    $\mathcal{C}$ contains the rarities:
+                </p>
+                <ul>
+                    <li>common with $S_C = 100$,</li>
+                    <li>uncommon with $S_U = 75$,</li>
+                    <li>rare with $S_R = 50$,</li>
+                    <li>mythic rare with $S_M = 25$ and</li>
+                    <li>foil variants of each of the above rarities, with $S_{FC} = S_C$, $S_{FU} = S_U$, $S_{FR} = S_R$ and $S_{FM} = S_M$.</li>
+                </ul>
+                <p>
+                    Let $N$ be the number of cards in a booster pack, and for any $n \in \{1, \ldots, N\}$ and $r \in \mathcal{R}$, let $p_n^r$
+                    denote the probability that card $n$ in the pack is of rarity $r$. If we assume that there are no special rules about booster
+                    box guarantees or duplicate cards in packs (i.e., each booster pack is independent and identically distributed, and within a
+                    booster pack, each card slot is sampled independently), then the $N \times |\mathcal{R}|$ matrix $\boldsymbol{P}$ of these
+                    probabilities (along with the rarity set counts $S_r$) uniquely defines the booster pack. These probabilities can typically
+                    be found on a trading card game's website - for example, the image below shows an explanation of a booster pack from a
+                    recent TCG called <a href="https://sorcerytcg.com/" target="_blank">Sorcery: Contested Realm</a>.
+                </p>
+                <div class="image">
+                    <img src="../images/sorcery_booster.png" alt="Explanation of a Sorcery booster pack." style="max-width: 700px;">
+                </div>
+                <p>
+                    Continuing our hypothetical example, let's say that the booster pack contains 12 cards and is laid out as follows:
+                </p>
+                <ul>
+                    <li>cards 1-7: always common, so for $n \in \{ 1, \ldots, 7 \}$, &nbsp; $p_N^C = 1$ and $p_n^r = 0$ for all $r \neq C$;</li>
+                    <li>cards 8-10: always uncommon, so for $n \in \{ 8, 9, 10 \}$, &nbsp; $p_N^U = 1$ and $p_n^r = 0$ for all $r \neq U$;</li>
+                    <li>card 11: 80% likely to be rare and 20% likely to be mythic rare, so $p_{11}^R = 0.8$,&nbsp; $p_{11}^M = 0.2$ &nbsp;and&nbsp; $p_{11}^C = p_{11}^U = 0$; and</li>
+                    <li>
+                        card 12: 50% foil common, 30% foil uncommon, 15% foil rare and 5% foil mythic, so $p_{12}^{FC} = 0.5$,&nbsp;
+                        $p_{12}^{FU} = 0.3$,&nbsp; $p_{12}^{FR} = 0.15$ &nbsp;and&nbsp; $p_{12}^{FM} = 0.05$.
+                    </li>
+                </ul>
+                <p>
+                    Notice that
+                    $$\sum_{r \in \mathcal{R}} p_n^r \> = \> 1,$$
+                    for all $n$, meaning each row of $\boldsymbol{P}$ sums to 1, because each card slot is guaranteed to contain a card.
+                </p>
+
+                <h3>Likelihood of opening a desired card from multiple booster packs</h3>
+                <p>
+                    Let's say we have $B \in \mathbb{N}$ booster packs to open, and we have identified a subset of desired cards
+                    $\mathcal{D} \subset \mathcal{C}$ that we would like to find, and that we would be happy to open at least one of these cards. For
+                    each rarity $r \in \mathcal{R}$, let $0 \leq d_r \leq S_r$ be the number of cards in our desired subset at that rarity, so
+                    $$\sum_{r \in \mathcal{R}} d_r = |\mathcal{D}|.$$
+                    Then
+                    $$\begin{align}
+                    \mathbb{P}(\text{open at least one desired card}) \> &= \> 1 - \mathbb{P}(\text{open no desired cards}) \\
+                    &= \> 1 - \mathbb{P}(\text{open no desired cards from a booster pack})^B \\
+                    &= \> 1 - \left( \prod_{n=1}^N \mathbb{P}(\text{card } n \text{ is not desired})\right)^B \\
+                    &= \> 1 - \left( \prod_{n=1}^N \left( 1 - \mathbb{P}(\text{card } n \text{ is desired}) \right) \right)^B \\
+                    &= \> 1 - \left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^B,
+                    \end{align}$$
+                    because the likelihood of opening a specific card of rarity $r \in \mathcal{R}$ from the $n^{\text{th}}$ slot of a
+                    booster pack is $\frac{p_n^r}{S_r}$, which you can verify by noticing that the sum of these likelihoods
+                    $$\sum_{r \in \mathcal{R}} \sum_{c = 1}^{S_r} \frac{p_n^r}{S_r} \> = \> \sum_{r \in \mathcal{R}} p_n^r \> = \> 1.$$
+                </p>
+                <p>
+                    Continuing the example, suppose that we have 8 booster packs to open and our pool of desired cards $\mathcal{D}$ consists
+                    of 4 rare cards and 8 mythic rare cards, which we would be happy to find as either non-foil or foil, so $d_R = d_{FR} = 4$,&nbsp;
+                    $d_M = d_{FM} = 8$ &nbsp;and&nbsp; $d_C = d_{FC} = d_U = d_{FU} = 0$. Then
+                    $$\begin{align}
+                    \mathbb{P}(\text{open at least one desired card}) \> &= \> 1 - \left( \prod_{n=1}^{12} \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^8 \\
+                    &= \> 1 - \left(
+                        \left( 1 - \frac{d_R p_{11}^R}{S_R} - \frac{d_M p_{11}^M}{S_M} \right)
+                        \left( 1 - \frac{d_{FR} p_{12}^{FR}}{S_{FR}} - \frac{d_{FM} p_{12}^{FM}}{S_{FM}} \right)
+                    \right)^8 \\
+                    &= \> 1 - \left( \left( 1 - \frac{4 \times 0.8}{50} - \frac{8 \times 0.2}{25} \right) \left( 1 - \frac{4 \times 0.15}{50} - \frac{8 \times 0.05}{25} \right) \right)^8 \\
+                    &= \> 1 - \left( \left( 1 - 0.064 - 0.064 \right) \left( 1 - 0.012 - 0.016 \right) \right)^8 \\
+                    &= \> 1 - ( 0.872 \times 0.972 )^8 \\
+                    &\approx \> 0.73,
+                    \end{align}$$
+                    so we are 73% likely to open a desired card and be satisfied with our purchase.
+                </p>
+
+                <h3>Number of booster packs required to be confident in opening a desired card</h3>
+                <p>
+                    Let $0 < x < 1$ be the confidence we want to have in opening at least one desired card from $\mathcal{D} \subset \mathcal{C}$,
+                    and we wish to find the minimum number of booster packs $B$ we need to open to achieve this confidence. In the previous section,
+                    we showed that
+                    $$\mathbb{P}(\text{open at least one desired card}) \> = \> 1 - \left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^B.$$
+                    Substituting $x$, we have that
+                    $$x \> \leq \> 1 - \left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right)^B,$$
+                    and hence
+                    $$B \> \geq \> \frac{\log(1-x)}{\log\left( \prod_{n=1}^N \left( 1 - \sum_{r \in \mathcal{R}} \frac{d_r p_n^r}{S_r} \right) \right) }.$$
+                </p>
+                <p>
+                    If we take the desired subset $\mathcal{D}$ containing 4 rare and 8 mythic rare cards from the previous example, and
+                    let $x = 0.5$ for a target 50% confidence in opening a desired card, we have that
+                    $$B \> \geq \> \frac{\log(0.5)}{\log(0.847584)} \> \approx \> 4.19,$$
+                    so rounding up, we need to open 5 booster packs to be 50% confident that we'll open a desired card.
+                </p>
+
+                <!--
+                https://math.stackexchange.com/questions/3161373/probability-of-certain-rarities-in-a-trading-card-game-booster-box
+
+                Q: what is the expected number of rare (foil or non-foil) cards in a booster pack?
+                A: E[rare cards] = \sum_{n=1}^{N} P(card n is rare)
+                                 = \sum_{n=1}^{N} (p_nR + p_nFR)
+                                 = 0.2 + 0.2 + 0.8 + 0.8
+                                 = 2
+
+                Q: how many booster packs do I need to open to be >= 90% sure I will open every rare in the set?
+                A: we previously derived that E[rare cards] = 2 per booster pack
+                   hence the expected number of rare cards from opening B booster packs is 2B
+                   the number of ways to choose 2B cards from the set of S_R = S_FR rare cards is S_R^2B
+                   how many of these sequences contain every rare card at least once? S_R! * S(2B, S_R) where S(n, k) is the Stirling number of the second kind
+                   hence the probability of opening every rare card at least once is S_R! * S(2B, S_R) / S_R^2B
+                   = [\sum_{i=0}^{S_R} (-1)^i * S_R_C_i * (S_R - i)^2B] / S_R^2B
+                   = \sum_{i=0}^{S_R} (-1)^i * S_R_C_i * [(S_R - i) / S_R]^2B
+                   this can't be simplified to make B the subject, but we can use a binary search to find the minimum B such that the probability is >= 0.9
+                -->
+
+                <h3>Interactive booster pack model</h3>
+                <p>
+                    Below is an interactive table which you can use to define a booster pack model for calculating answers to the questions
+                    discussed in this article. The table is pre-populated with the hypothetical booster pack used in the examples above, but
+                    you can add & remove card slots and rarities, adjust the likelihoods & set sizes and rename the rarities to fit this
+                    model to a real TCG booster pack you would like to query. The bottom row of the table is for inputting the desired subset
+                    of cards $\mathcal{D}$. Note that leaving a field blank is equivalent to setting it to 0. After you're finished defining
+                    your model, you can use the "Check model" button to check if you have defined a valid booster pack. If you reload the page,
+                    the model will be reset to the default hypothetical example.
+                </p>
+                <p>
+                    Below the table, enter a number of booster packs to compute the likelihood of opening at least one desired card, or enter
+                    a confidence threshold to compute the number of booster packs required to achieve that confidence.
+                </p>
+
+                <div style="overflow-x: auto;">
+                    <table id="model">
+                        <thead>
+                            <tr>
+                                <th>Slot</th>
+                                <th><input class="rarity" value="common"></th>
+                                <th><input class="rarity" value="uncommon"></th>
+                                <th><input class="rarity" value="rare"></th>
+                                <th><input class="rarity" value="mythic"></th>
+                                <th><input class="rarity" value="foil-common"></th>
+                                <th><input class="rarity" value="foil-uncommon"></th>
+                                <th><input class="rarity" value="foil-rare"></th>
+                                <th><input class="rarity" value="foil-mythic"></th>
+                                <th><button id="add-rarity">+</button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="slot">
+                                <td class="slot-number">1</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">2</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">3</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">4</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">5</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">6</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">7</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">8</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">9</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">10</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">11</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.8"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.2"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                            <tr class="slot">
+                                <td class="slot-number">12</td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.5"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.3"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.15"></td>
+                                <td><input class="likelihood" type="number" step="0.001" min="0" max="1" value="0.05"></td>
+                                <td><button class="remove-slot">&minus;</button></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td><button id="add-slot">+</button></td>
+                                <td><button class="remove-rarity" data-r="1">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="2">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="3">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="4">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="5">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="6">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="7">&minus;</button></td>
+                                <td><button class="remove-rarity" data-r="8">&minus;</button></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><b>Set Sizes</b></td>
+                                <td><input class="set" type="number" step="1" min="1" value="100"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="75"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="50"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="25"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="100"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="75"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="50"></td>
+                                <td><input class="set" type="number" step="1" min="1" value="25"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><b>Desired</b></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1" value="4"></td>
+                                <td><input class="desired" type="number" step="1" min="1" value="8"></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1"></td>
+                                <td><input class="desired" type="number" step="1" min="1" value="4"></td>
+                                <td><input class="desired" type="number" step="1" min="0" value="8"></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <p style="margin-top: 20px;">
+                    <button id="check-model">Check model</button>
+                    &nbsp;&nbsp;&nbsp;
+                    <span id="check-result"></span>
+                </p>
+                <p>
+                    <input id="calc-boosters" type="number" step="1" min="1"> booster packs
+                    &nbsp;<b>=</b>&nbsp;
+                    <input id="calc-likelihood" type="number" step="0.001" min="0" max="1"> likelihood
+                </p>
+
+                <h3>References</h3>
+                <ol id="references">
+                    <li>
+                        Sison, Michael. "Money and Mathematics: Booster Packs." <i>SixPrizes</i>, 10 Apr. 2011,
+                        <a href="https://sixprizes.com/2011/04/10/money-and-mathematics-booster/" target="_blank">sixprizes.com/2011/04/10/money-and-mathematics-booster/</a>.
+                    </li>
+                </ol>
+                <p>
+                    If you have any corrections or questions - please send me an email and we can have a discussion. Any
+                    edits or additions to the original article & code will be noted here.
+                </p>
+            </section>
+
+            <div class="footer">
+                <p>Copyright &copy; Ethan Mitchell 2025</p>
+                <p>ethanmitchell98@gmail.com</p>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/glsl.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <script>
+    $( function() {
+        // functions for adding/removing slots/rarities from model table
+        $(document).on("click", ".remove-slot", function() {
+            $(this).parents(".slot").remove();
+
+            $(".slot-number").each(function (i) {
+                $(this).text(i + 1);
+            });
+        });
+
+        $(document).on("click", ".remove-rarity", function() {
+            let r = parseInt($(this).attr("data-r"));
+            $($(".rarity")[r-1]).parent().remove();
+            $(".slot").each(function () {
+                $($(this).find(".likelihood")[r-1]).parent().remove();
+            });
+            $(this).parent().remove();
+            $($(".set")[r-1]).parent().remove();
+            $($(".desired")[r-1]).parent().remove();
+
+            $(".remove-rarity").each(function (i) {
+                $(this).attr("data-r", i + 1);
+            });
+        });
+
+        $(document).on("click", "#add-slot", function() {
+            let n = $(".slot").length + 1;
+            let slot_html = `<tr class="slot"><td class="slot-number">${n}</td>`;
+            $(".rarity").each(function () {
+                slot_html += '<td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>';
+            });
+            slot_html += '<td><button class="remove-slot">&minus;</button></td></tr>';
+            $("#model tbody").append(slot_html);
+        });
+
+        $(document).on("click", "#add-rarity", function() {
+            let r = $(".rarity").length + 1;
+            $(this).parent().before('<th><input class="rarity"></th>');
+            $(".slot").each(function () {
+                $(this).find("td:last").before('<td><input class="likelihood" type="number" step="0.001" min="0" max="1"></td>');
+            });
+            $(".remove-rarity:last").parent().after(`<td><button class="remove-rarity" data-r="${r}">&minus;</button></td>`);
+            $(".set:last").parent().after('<td><input class="set" type="number" step="1" min="1"></td>');
+            $(".desired:last").parent().after('<td><input class="desired" type="number" step="1" min="0"></td>');
+        });
+
+        // functions for loading & checking the model
+        function load_model() {
+            let rarity_names = [];
+            $(".rarity").each(function () {
+                rarity_names.push($(this).val());
+            });
+
+            let probabilities = [];
+            $(".slot").each(function () {
+                let slot_probs = [];
+                $(this).find(".likelihood").each(function () {
+                    let likelihood = $(this).val();
+                    if (likelihood == "") {
+                        slot_probs.push(0);
+                    } else {
+                        slot_probs.push(parseFloat(likelihood));
+                    }
+                });
+                probabilities.push(slot_probs);
+            });
+
+            let set_sizes = [];
+            $(".set").each(function () {
+                set_sizes.push(parseInt($(this).val()));
+            });
+
+            let desired_counts = [];
+            $(".desired").each(function () {
+                let count = $(this).val();
+                if (count == "") {
+                    desired_counts.push(0);
+                } else {
+                    desired_counts.push(parseInt(count));
+                }
+            });
+
+            return {
+                rarity_names: rarity_names,
+                probabilities: probabilities,
+                set_sizes: set_sizes,
+                desired_counts: desired_counts
+            };
+        }
+
+        function check_model(model) {
+            let n_rarities = model.rarity_names.length;
+            let n_slots = model.probabilities.length;
+
+            for (let r = 0; r < n_rarities; r++) {
+                if (model.rarity_names[r] == "") {
+                    return {result: false, message: `Rarity name ${r+1} is empty.`};
+                }
+            }
+            let rarities_set = new Set(model.rarity_names);
+            if (rarities_set.size != n_rarities) {
+                return {result: false, message: "Rarity names are not unique."};
+            }
+
+            for (let n = 0; n < n_slots; n++) {
+                let p_sum = 0.0;
+                for (let r = 0; r < n_rarities; r++) {
+                    if (model.probabilities[n][r] < 0 || model.probabilities[n][r] > 1) {
+                        return {result: false, message: `Slot ${n+1} ${model.rarity_names[r]} probability is invalid.`};
+                    }
+                    p_sum += model.probabilities[n][r];
+                }
+                if (Math.abs(p_sum - 1.0) > 0.0005) {
+                    return {result: false, message: `Slot ${n+1} probabilities do not sum to 1.`};
+                }
+            }
+
+            for (let r = 0; r < n_rarities; r++) {
+                if (model.set_sizes[r] < 1) {
+                    return {result: false, message: `Set size for ${model.rarity_names[r]} rarity is invalid.`};
+                }
+                if (model.desired_counts[r] < 0 || model.desired_counts[r] > model.set_sizes[r]) {
+                    return {result: false, message: `Desired cards count for ${model.rarity_names[r]} rarity is invalid.`};
+                }
+            }
+
+            return {result: true, message: "Model is valid."};
+        }
+
+        $(document).on("click", "#check-model", function() {
+            let model = load_model();
+            let check = check_model(model);
+            $("#check-result").text(check.message);
+        });
+
+        // functions for calculator
+        function p_booster_no_desired_cards(model) {
+            let n_slots = model.probabilities.length;
+            let n_rarities = model.rarity_names.length;
+
+            let prob = 1.0;
+            for (let n = 0; n < n_slots; n++) {
+                let prob_desired_in_slot = 0.0;
+                for (let r = 0; r < n_rarities; r++) {
+                    prob_desired_in_slot += model.desired_counts[r] * model.probabilities[n][r] / model.set_sizes[r];
+                }
+                prob *= 1 - prob_desired_in_slot;
+            }
+            return prob;
+        }
+
+        function q1(model, booster_count) {
+            return 1 - Math.pow(p_booster_no_desired_cards(model), booster_count);
+        }
+
+        function q2(model, prob_threshold) {
+            let booster_min = Math.log(1 - prob_threshold) / Math.log(p_booster_no_desired_cards(model));
+            return Math.ceil(booster_min);
+        }
+
+        $(document).on("change", "#calc-boosters", function() {
+            if ($(this).val() == "") {
+                return;
+            }
+
+            $("#calc-likelihood").val("");
+
+            let model = load_model();
+            let check = check_model(model);
+            if (!check.result) {
+                $("#check-result").text(check.message);
+                return;
+            }
+
+            let booster_count = parseInt($(this).val());
+            if (booster_count < 1) {
+                $("#check-result").text("Number of booster packs must be at least 1.");
+                return;
+            }
+
+            let prob = q1(model, booster_count);
+            $("#calc-likelihood").val(prob.toFixed(3));
+        });
+
+        $(document).on("change", "#calc-likelihood", function() {
+            if ($(this).val() == "") {
+                return;
+            }
+
+            $("#calc-boosters").val("");
+
+            let model = load_model();
+            let check = check_model(model);
+            if (!check.result) {
+                $("#check-result").text(check.message);
+                return;
+            }
+
+            let likelihood = parseFloat($(this).val());
+            if (likelihood <= 0 || likelihood >= 1) {
+                $("#check-result").text("Likelihood must be between 0 and 1.");
+                return;
+            }
+
+            let min_boosters = q2(model, likelihood);
+            $("#calc-boosters").val(min_boosters);
+        });
+    });
+    </script>
+
+</html>
